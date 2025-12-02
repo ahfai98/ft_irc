@@ -35,12 +35,6 @@ int main()
     client.addChannelInvites("#channel1");
     client.addChannelInvites("#channel2");
 
-    std::cout << "Invited to #channel1? " 
-              << client.isInvitedToChannel("#channel1") << std::endl;
-    client.removeChannelInvites("#channel1");
-    std::cout << "Invited to #channel1 after removal? " 
-              << client.isInvitedToChannel("#channel1") << std::endl;
-
     // Test joined channels
     client.addJoinedChannels("#general");
     client.addJoinedChannels("#random");
