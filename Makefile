@@ -15,15 +15,11 @@ SRCS = main.cpp \
 
 SRC_FILES = $(addprefix $(SRC_DIR)/,$(SRCS))
 
-
 OBJS = $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))
-
 
 DEPS = $(OBJS:.o=.d)
 
-
 all: $(NAME)
-
 
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
@@ -32,10 +28,8 @@ $(NAME): $(OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-
 $(OBJ_DIR):
 	@mkdir -p $(OBJ_DIR)
-
 
 -include $(DEPS)
 
@@ -50,3 +44,8 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+test_client:
+	@$(CC) $(CFLAGS) src/testfiles/test_client.cpp src/Client.cpp -o test_client
+	@./test_client
+	@rm -rf test_client test_client.d
