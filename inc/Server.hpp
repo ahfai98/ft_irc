@@ -38,6 +38,9 @@ class Server
         std::string password;
         std::vector<struct pollfd> pollfds;
         struct sockaddr_in address;
+        std::map<int, Client*> clientsByFd;
+        std::map<std::string, Client*> clientsByNickname;
+        std::map<std::string, Channel*> channels;  
         Server(Server const &src);
         Server &operator=(Server const &src);
     public:
@@ -47,6 +50,7 @@ class Server
         int getPort() const;
         int getSocketFd() const;
         std::string getPassword() const;
+
         //Setters
         void setPort(int port);
         void setSocketFd(int fd);
@@ -59,6 +63,23 @@ class Server
         void acceptClient();
         void receiveClientData(int fd);
         void fatalError(const char* msg);
+
+        Client *getClientByFd(int fd);
+        Client *getClientByNickname(const std::string& nickname);
+        Channel *getChannel(const std::string& name);
+        void addClient(Client* cli);
+        void addChannel(Channel* ch);
+        void removeClient(int fd);
+        void removeChannel(const std::string& ch);
+        void clearClients();
+        void clearChannels();
+        void removePollfd(int fd);
+        void removeClientFromAllChannels(Client *cli);
+
+        void sendResponse(int fd, const std::string &message);
+        void sendClientError(int fd, int code, const std::string &clientName, const std::string &message);
+        void sendChannelError(int fd, int code, const std::string &clientName,
+                              const std::string &channelName, const std::string &message);
 };
 
 #endif

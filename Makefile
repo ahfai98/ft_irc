@@ -56,4 +56,4 @@ test_channel:
 	@rm -rf test_channel ./*.d
 
 test_server:
-	@$(CC) $(CFLAGS) src/testfiles/test_server.cpp src/Server.cpp -o test_server
+	@$(CC) $(CFLAGS) -pthread src/testfiles/test_server.cpp src/Server.cpp src/Channel.cpp src/Client.cpp -o test_server
