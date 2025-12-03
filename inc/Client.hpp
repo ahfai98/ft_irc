@@ -27,7 +27,7 @@ class Client
 		bool getFullyAuthenticated() const;
 		std::string getUsername() const;
 		std::string getNickname() const;
-		std::string getBuffer() const;
+		std::string& getBuffer() ;
 		const std::vector<std::string>& getJoinedChannels() const;
 		//Setters
 		void setSocketFd(int fd);

@@ -2,11 +2,28 @@
 
 bool Server::receivedSignal = false;
 
+void Server::initCommandMap()
+{
+    commandMap["PASS"]   = &Server::client_authen;
+    commandMap["NICK"]   = &Server::set_nickname;
+    commandMap["USER"]   = &Server::set_username;
+    commandMap["QUIT"]   = &Server::QUIT;
+    commandMap["JOIN"]   = &Server::JOIN;
+    commandMap["KICK"]   = &Server::KICK;
+    commandMap["TOPIC"]  = &Server::Topic;
+    commandMap["MODE"]   = &Server::mode_command;
+    commandMap["PART"]   = &Server::PART;
+    commandMap["PRIVMSG"]= &Server::PRIVMSG;
+    commandMap["INVITE"] = &Server::Invite;
+    commandMap["PING"]   = &Server::PING;
+}
+
 Server::Server()
 : port(-1),
   socketFd(-1),
   password("")
 {
+	initCommandMap();
 }
 
 Server::~Server()
@@ -148,28 +165,116 @@ void Server::acceptClient()
 
 void Server::receiveClientData(int fd)
 {
-	char buffer[512];
-	ssize_t bytes = recv(fd, buffer, sizeof(buffer), 0);
+    char buff[512];
+    Client* cli = getClientByFd(fd);
+    if (!cli)
+        return;
+    ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
 
-	if (bytes <= 0)
-	{
-		std::cout << "Client disconnected: fd=" << fd << std::endl;
+    // Client disconnected or error
+    if (bytes <= 0)
+    {
+        std::cout << "Client disconnected: fd=" << fd << std::endl;
+		removePollfd(fd);
+        removeClient(fd);
+        return;
+    }
 
-		// Remove fd from pollfds
-		for (size_t i = 0; i < pollfds.size(); ++i)
-		{
-			if (pollfds[i].fd == fd)
+    // Append new data to client's buffer
+    cli->setBuffer(cli->getBuffer() + std::string(buff, bytes));
+
+    std::string& buf = cli->getBuffer();
+    size_t pos;
+
+    // Extract and execute complete commands ending with \r\n
+    while ((pos = buf.find("\r\n")) != std::string::npos)
+    {
+        std::string command = buf.substr(0, pos);
+
+        // Execute the command
+        parseExecuteCommand(command, fd);
+
+        // Remove processed command + \r\n from buffer
+        buf.erase(0, pos + 2);
+    }
+}
+
+std::vector<std::string> Server::splitCommand(const std::string &cmdLine)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(cmdLine);
+    std::string token;
+
+    while (iss >> token)
+    {
+        if (token[0] == ':')
+        {
+            // Everything after ':' is trailing message
+            std::string trailing;
+            std::getline(iss, trailing);
+            if (!trailing.empty() && trailing[0] == ' ')
+                trailing.erase(0, 1);
+            tokens.push_back(token + trailing);
+            break;
+        }
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+void Server::parseExecuteCommand(std::string &cmd, int fd)
+{
+    if (cmd.empty())
+        return;
+
+    // Trim leading whitespace
+    size_t first = cmd.find_first_not_of(" \t\v");
+    if (first != std::string::npos)
+        cmd = cmd.substr(first);
+
+    std::vector<std::string> tokens = splitCommand(cmd);
+    if (tokens.empty())
+        return;
+
+    // Case-insensitive command
+    std::string command = tokens[0];
+    for (size_t i = 0; i < command.size(); ++i)
+        command[i] = toupper(command[i]);
+
+    if (command == "BONG")
+        return;
+
+    CommandHandler handler = NULL;
+    std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);
+    if (it != commandMap.end())
+        handler = it->second;
+
+    Client* cli = getClientByFd(fd);
+    if (!cli)
+        return;
+
+    if (handler)
+    {
+        // Only allow PASS/NICK/USER if not fully authenticated
+        if (!cli->getFullyAuthenticated())
+        {
+            if (command == "PASS" || command == "NICK" || command == "USER")
 			{
-				close(fd);
-				pollfds.erase(pollfds.begin() + i);
-				break;
+                (this->*handler)(cmd, fd);
+				cli->setFullyAuthenticated(true);
 			}
-		}
-		return;
-	}
-
-	buffer[bytes] = '\0';
-	std::cout << "Received from fd=" << fd << " : " << buffer << std::endl;
+            else
+                sendResponse(fd, "ERR_NOTREGISTERED");
+        }
+        else
+        {
+            (this->*handler)(cmd, fd);
+        }
+    }
+    else
+    {
+        sendResponse(fd, "ERR_CMDNOTFOUND");
+    }
 }
 
 Client* Server::getClientByFd(int fd)
@@ -309,4 +414,67 @@ void Server::sendChannelError(int fd, int code, const std::string &clientName,
     std::stringstream ss;
     ss << ":localhost " << code << " " << clientName << " " << channelName << " " << message;
     sendResponse(fd, ss.str());
+}
+
+
+void Server::client_authen(const std::string &cmd, int fd)
+{
+    std::cout << "Client authen command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+
+void Server::set_nickname(const std::string &cmd, int fd)
+{
+    std::cout << "NICK command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::set_username(const std::string &cmd, int fd)
+{
+    std::cout << "USER command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::QUIT(const std::string &cmd, int fd)
+{
+    std::cout << "QUIT command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::JOIN(const std::string &cmd, int fd)
+{
+    std::cout << "JOIN command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::KICK(const std::string &cmd, int fd)
+{
+    std::cout << "KICK command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::Topic(const std::string &cmd, int fd)
+{
+    std::cout << "TOPIC command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::mode_command(const std::string &cmd, int fd)
+{
+    std::cout << "MODE command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::PART(const std::string &cmd, int fd)
+{
+    std::cout << "PART command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::PRIVMSG(const std::string &cmd, int fd)
+{
+    std::cout << "PRIVMSG command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::Invite(const std::string &cmd, int fd)
+{
+    std::cout << "Invite command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
+}
+void Server::PING(const std::string &cmd, int fd)
+{
+    std::cout << "Ping command from " << fd << std::endl;
+	std::cout << cmd << std::endl;
 }

@@ -25,7 +25,7 @@ std::string Client::getUsername() const {return username;}
 
 std::string Client::getNickname() const{return nickname;}
 
-std::string Client::getBuffer() const {return receiveBuffer;}
+std::string& Client::getBuffer() {return receiveBuffer;}
 
 const std::vector<std::string>& Client::getJoinedChannels() const {return joinedChannels;}
 

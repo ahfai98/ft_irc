@@ -56,4 +56,11 @@ test_channel:
 	@rm -rf test_channel ./*.d
 
 test_server:
-	@$(CC) $(CFLAGS) -pthread src/testfiles/test_server.cpp src/Server.cpp src/Channel.cpp src/Client.cpp -o test_server
+	@$(CC) $(CFLAGS) src/testfiles/test_server.cpp src/Server.cpp src/Channel.cpp src/Client.cpp -o test_server
+
+test:
+	@$(CC) $(CFLAGS) -o server src/testfiles/server_main.cpp src/Server.cpp src/Client.cpp src/Channel.cpp
+	@$(CC) $(CFLAGS) -o client src/testfiles/client_main.cpp
+
+rmtest:
+	@rm -rf server client ./*.d
