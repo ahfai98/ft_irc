@@ -83,26 +83,29 @@ class Server
         void sendChannelError(int fd, int code, const std::string &clientName,
                               const std::string &channelName, const std::string &message);
         
-        std::vector<std::string> splitReceivedBuffer(const std::string &str);
-        void parseExecuteCommand(const std::string &cmdLine, int fd);
         std::vector<std::string> splitCommand(const std::string &cmdLine);
 
         void initCommandMap();
 
         void parseExecuteCommand(std::string &cmd, int fd);
         //Handlers
-        void client_authen(const std::string &cmd, int fd);
-        void set_nickname(const std::string &cmd, int fd);
-        void set_username(const std::string &cmd, int fd);
+        void PASS(const std::string &cmd, int fd);
+        void NICK(const std::string &cmd, int fd);
+        void USER(const std::string &cmd, int fd);
         void QUIT(const std::string &cmd, int fd);
         void JOIN(const std::string &cmd, int fd);
         void KICK(const std::string &cmd, int fd);
-        void Topic(const std::string &cmd, int fd);
-        void mode_command(const std::string &cmd, int fd);
+        void TOPIC(const std::string &cmd, int fd);
+        void MODE(const std::string &cmd, int fd);
         void PART(const std::string &cmd, int fd);
         void PRIVMSG(const std::string &cmd, int fd);
-        void Invite(const std::string &cmd, int fd);
+        void INVITE(const std::string &cmd, int fd);
         void PING(const std::string &cmd, int fd);
+        
+        void sendWelcome(Client *cli);
+
+        //NICK command
+        bool isValidNickname(const std::string &nickname);
 };
 
 #endif

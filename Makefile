@@ -9,9 +9,10 @@ INC_DIR = inc
 
 SRCS = main.cpp \
        Server.cpp Client.cpp Channel.cpp \
-       pass.cpp nick.cpp user.cpp join.cpp part.cpp \
-       privmsg.cpp mode.cpp quit.cpp topic.cpp notice.cpp \
-	   ping.cpp
+       pass.cpp nick.cpp user.cpp \
+	   join.cpp part.cpp \
+       privmsg.cpp mode.cpp quit.cpp topic.cpp \
+	   ping.cpp invite.cpp kick.cpp
 
 SRC_FILES = $(addprefix $(SRC_DIR)/,$(SRCS))
 
@@ -44,23 +45,3 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
-
-test_client:
-	@$(CC) $(CFLAGS) src/testfiles/test_client.cpp src/Client.cpp -o test_client
-	@./test_client
-	@rm -rf test_client test_client.d
-
-test_channel:
-	@$(CC) $(CFLAGS) src/testfiles/test_channel.cpp src/Channel.cpp src/Client.cpp -o test_channel
-	@./test_channel
-	@rm -rf test_channel ./*.d
-
-test_server:
-	@$(CC) $(CFLAGS) src/testfiles/test_server.cpp src/Server.cpp src/Channel.cpp src/Client.cpp -o test_server
-
-test:
-	@$(CC) $(CFLAGS) -o server src/testfiles/server_main.cpp src/Server.cpp src/Client.cpp src/Channel.cpp
-	@$(CC) $(CFLAGS) -o client src/testfiles/client_main.cpp
-
-rmtest:
-	@rm -rf server client ./*.d

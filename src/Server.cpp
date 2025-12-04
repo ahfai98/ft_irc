@@ -4,17 +4,17 @@ bool Server::receivedSignal = false;
 
 void Server::initCommandMap()
 {
-    commandMap["PASS"]   = &Server::client_authen;
-    commandMap["NICK"]   = &Server::set_nickname;
-    commandMap["USER"]   = &Server::set_username;
+    commandMap["PASS"]   = &Server::PASS;
+    commandMap["NICK"]   = &Server::NICK;
+    commandMap["USER"]   = &Server::USER;
     commandMap["QUIT"]   = &Server::QUIT;
     commandMap["JOIN"]   = &Server::JOIN;
     commandMap["KICK"]   = &Server::KICK;
-    commandMap["TOPIC"]  = &Server::Topic;
-    commandMap["MODE"]   = &Server::mode_command;
+    commandMap["TOPIC"]  = &Server::TOPIC;
+    commandMap["MODE"]   = &Server::MODE;
     commandMap["PART"]   = &Server::PART;
     commandMap["PRIVMSG"]= &Server::PRIVMSG;
-    commandMap["INVITE"] = &Server::Invite;
+    commandMap["INVITE"] = &Server::INVITE;
     commandMap["PING"]   = &Server::PING;
 }
 
@@ -95,7 +95,6 @@ void Server::serverInit(int port, const std::string &password)
 {
 	this->port = port;
 	this->password = password;
-
 	setupServerSocket();
 
 	std::cout << "Server <" << socketFd << "> Connected." << std::endl;
@@ -207,20 +206,18 @@ std::vector<std::string> Server::splitCommand(const std::string &cmdLine)
 
     while (iss >> token)
     {
-        if (token[0] == ':')
+        if (!token.empty() && token[0] == ':')
         {
-            // Everything after ':' is trailing message
             std::string trailing;
             std::getline(iss, trailing);
-            if (!trailing.empty() && trailing[0] == ' ')
-                trailing.erase(0, 1);
-            tokens.push_back(token + trailing);
+            tokens.push_back(token + trailing); 
             break;
         }
         tokens.push_back(token);
     }
     return tokens;
 }
+
 
 void Server::parseExecuteCommand(std::string &cmd, int fd)
 {
@@ -255,16 +252,31 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
 
     if (handler)
     {
-        // Only allow PASS/NICK/USER if not fully authenticated
+        // If client is not fully authenticated
         if (!cli->getFullyAuthenticated())
         {
+            // Enforce PASS first if server password is set
+            if (!cli->getPasswordAuthenticated() && command != "PASS")
+            {
+                sendResponse(fd, "464 :Password required first\r\n");
+                return;
+            }
+            // Only allow PASS/NICK/USER before registration
             if (command == "PASS" || command == "NICK" || command == "USER")
-			{
+            {
                 (this->*handler)(cmd, fd);
-				cli->setFullyAuthenticated(true);
-			}
+
+                // Try completing registration: PASS must be correct if required
+                if (!cli->getFullyAuthenticated() && cli->getPasswordAuthenticated() &&
+                    !cli->getNickname().empty() &&
+                    !cli->getUsername().empty())
+                {
+                    cli->setFullyAuthenticated(true);
+                    sendWelcome(cli);
+                }
+            }
             else
-                sendResponse(fd, "ERR_NOTREGISTERED");
+                sendResponse(fd, "451 :You have not registered\r\n");
         }
         else
         {
@@ -272,9 +284,7 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         }
     }
     else
-    {
         sendResponse(fd, "ERR_CMDNOTFOUND");
-    }
 }
 
 Client* Server::getClientByFd(int fd)
@@ -394,9 +404,14 @@ void Server::removePollfd(int fd)
 	}
 }
 
+
 void Server::sendResponse(int fd, const std::string &message)
 {
-    if (send(fd, message.c_str(), message.size(), 0) == -1)
+    std::string msgWithCRLF = message;
+    if (msgWithCRLF.size() < 2 || msgWithCRLF.substr(msgWithCRLF.size()-2) != "\r\n")
+        msgWithCRLF += "\r\n";
+
+    if (send(fd, msgWithCRLF.c_str(), msgWithCRLF.size(), 0) == -1)
         std::cerr << "Failed to send to fd " << fd << std::endl;
 }
 
@@ -416,65 +431,9 @@ void Server::sendChannelError(int fd, int code, const std::string &clientName,
     sendResponse(fd, ss.str());
 }
 
-
-void Server::client_authen(const std::string &cmd, int fd)
+void Server::sendWelcome(Client *cli)
 {
-    std::cout << "Client authen command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-
-void Server::set_nickname(const std::string &cmd, int fd)
-{
-    std::cout << "NICK command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::set_username(const std::string &cmd, int fd)
-{
-    std::cout << "USER command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::QUIT(const std::string &cmd, int fd)
-{
-    std::cout << "QUIT command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::JOIN(const std::string &cmd, int fd)
-{
-    std::cout << "JOIN command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::KICK(const std::string &cmd, int fd)
-{
-    std::cout << "KICK command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::Topic(const std::string &cmd, int fd)
-{
-    std::cout << "TOPIC command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::mode_command(const std::string &cmd, int fd)
-{
-    std::cout << "MODE command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::PART(const std::string &cmd, int fd)
-{
-    std::cout << "PART command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::PRIVMSG(const std::string &cmd, int fd)
-{
-    std::cout << "PRIVMSG command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::Invite(const std::string &cmd, int fd)
-{
-    std::cout << "Invite command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
-}
-void Server::PING(const std::string &cmd, int fd)
-{
-    std::cout << "Ping command from " << fd << std::endl;
-	std::cout << cmd << std::endl;
+    int fd = cli->getSocketFd();
+    std::string nick = cli->getNickname();
+    sendResponse(fd, "001 " + nick + " :Welcome to the IRC Network");
 }
