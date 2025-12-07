@@ -74,6 +74,8 @@ class Channel
 		bool setAsMember(const std::string& nickname);
 		void broadcastMessage(const std::string& msg);
 		void broadcastMessageExcept(const std::string& msg, int fd);
+		void broadcastMessageToMembers(const std::string& msg);
+		void broadcastMessageToOperators(const std::string& msg);
 		void addInvited(const std::string& nickname);
 		void removeInvited(const std::string& nickname);
 		bool isInvited(const std::string& nickname) const;

@@ -109,6 +109,10 @@ class Server
 
         //NICK command
         bool isValidNickname(const std::string &nickname);
+
+        //MODE command
+        bool isValidKey(const std::string &key);
+        bool isValidLimit(const std::string &limit);
 };
 
 #endif

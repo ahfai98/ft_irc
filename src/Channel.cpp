@@ -220,6 +220,16 @@ static void sendMessageToClients(const std::vector<Client*>& clients, const std:
 	}
 }
 
+void Channel::broadcastMessageToOperators(const std::string& msg)
+{
+	sendMessageToClients(operators, msg);
+}
+
+void Channel::broadcastMessageToMembers(const std::string& msg)
+{
+	sendMessageToClients(members, msg);
+}
+
 void Channel::broadcastMessage(const std::string& msg)
 {
 	sendMessageToClients(operators, msg);
