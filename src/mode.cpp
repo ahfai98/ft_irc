@@ -79,7 +79,7 @@ void Server::MODE(const std::string &cmd, int fd)
             std::string limit_str = oss.str();
             params += " " + limit_str;
         }
-        sendResponse(fd, ":localhost 324 " + nickname + " #" + internalChannelName + " " modes + params + "\r\n");
+        sendResponse(fd, ":localhost 324 " + nickname + " #" + internalChannelName + " " + modes + params + "\r\n");
         return;
     }
 
