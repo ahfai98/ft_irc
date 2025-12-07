@@ -28,7 +28,7 @@ void Server::NICK(const std::string &cmd, int fd)
     std::vector<std::string> tokens = splitCommand(cmd);
     if (tokens.size() < 2)
     {
-        sendResponse(fd, "431 :No nickname given");
+        sendResponse(fd, "431 * :No nickname given");
         return;
     }
     std::string newNickname = tokens[1];
@@ -48,11 +48,11 @@ void Server::NICK(const std::string &cmd, int fd)
     }
 
     // Remove old nickname from map if exists
-    if (!cli->getNickname().empty() && clientsByNickname[cli->getNickname()] == cli)
+    if (cli->getNickname() != "*" && clientsByNickname[cli->getNickname()] == cli)
         clientsByNickname.erase(cli->getNickname());
 
-    // Broadcast only if fully authenticated
-    if (cli->getFullyAuthenticated())
+    // Broadcast only if registered
+    if (cli->getRegistered())
     {
         std::string oldNickname = cli->getNickname();
         for (std::map<std::string, Channel*>::iterator cit = channels.begin(); cit != channels.end(); ++cit)

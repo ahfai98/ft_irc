@@ -6,6 +6,7 @@
 #include <cstring> //memset(), strlen()
 #include <cstdlib> //atoi(), exit()
 #include <ctime> //time(), localtime()
+#include <iomanip> //setfill() and setwidth
 #include <cstddef> //size_t
 
 #include <iostream>
@@ -33,6 +34,7 @@ class Server
 {
     private:
         typedef void (Server::*CommandHandler)(const std::string &cmd, int fd);
+        std::string dateCreated;
         int port;
         int socketFd;
         static bool receivedSignal;
@@ -52,6 +54,7 @@ class Server
         int getPort() const;
         int getSocketFd() const;
         std::string getPassword() const;
+        std::string getDateCreated() const;
 
         //Setters
         void setPort(int port);

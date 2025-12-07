@@ -3,9 +3,9 @@
 Client::Client(int fd)
 :   socketFd(fd),
 	isPasswordAuthenticated(false),
-	isFullyAuthenticated(false),
+	isRegistered(false),
 	username(""),
-	nickname(""),
+	nickname("*"),
 	receiveBuffer(""),
 	ipAddress("")
 {
@@ -19,7 +19,7 @@ int Client::getSocketFd() const {return socketFd;}
 
 bool Client::getPasswordAuthenticated() const {return isPasswordAuthenticated;}
 
-bool Client::getFullyAuthenticated() const {return isFullyAuthenticated;}
+bool Client::getRegistered() const {return isRegistered;}
 
 std::string Client::getUsername() const {return username;}
 
@@ -33,7 +33,7 @@ void Client::setSocketFd(int fd) {socketFd = fd;}
 
 void Client::setPasswordAuthenticated(bool value){isPasswordAuthenticated = value;}
 
-void Client::setFullyAuthenticated(bool value){isFullyAuthenticated = value;}
+void Client::setRegistered(bool value){isRegistered = value;}
 
 void Client::setUsername(const std::string& username){this->username = username;}
 

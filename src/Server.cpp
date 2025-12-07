@@ -24,6 +24,13 @@ Server::Server()
   password("")
 {
 	initCommandMap();
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    std::ostringstream oss;
+    oss << std::setw(4) << std::setfill('0') << (t->tm_year + 1900) << "-"
+        << std::setw(2) << std::setfill('0') << (t->tm_mon + 1) << "-"
+        << std::setw(2) << std::setfill('0') << t->tm_mday;
+    dateCreated = oss.str();
 }
 
 Server::~Server()
@@ -35,6 +42,7 @@ Server::~Server()
 int Server::getPort() const { return port; }
 int Server::getSocketFd() const { return socketFd; }
 std::string Server::getPassword() const { return password; }
+std::string Server::getDateCreated() const { return dateCreated; }
 
 void Server::setPort(int port) { this->port = port; }
 void Server::setSocketFd(int fd) { socketFd = fd; }
@@ -252,8 +260,8 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
 
     if (handler)
     {
-        // If client is not fully authenticated
-        if (!cli->getFullyAuthenticated())
+        // If client is not registered
+        if (!cli->getRegistered())
         {
             // Enforce PASS first if server password is set
             if (!cli->getPasswordAuthenticated() && command != "PASS")
@@ -267,11 +275,11 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
                 (this->*handler)(cmd, fd);
 
                 // Try completing registration: PASS must be correct if required
-                if (!cli->getFullyAuthenticated() && cli->getPasswordAuthenticated() &&
-                    !cli->getNickname().empty() &&
+                if (!cli->getRegistered() && cli->getPasswordAuthenticated() &&
+                    cli->getNickname() != "*" &&
                     !cli->getUsername().empty())
                 {
-                    cli->setFullyAuthenticated(true);
+                    cli->setRegistered(true);
                     sendWelcome(cli);
                 }
             }
@@ -404,7 +412,6 @@ void Server::removePollfd(int fd)
 	}
 }
 
-
 void Server::sendResponse(int fd, const std::string &message)
 {
     std::string msgWithCRLF = message;
@@ -435,5 +442,10 @@ void Server::sendWelcome(Client *cli)
 {
     int fd = cli->getSocketFd();
     std::string nick = cli->getNickname();
-    sendResponse(fd, "001 " + nick + " :Welcome to the IRC Network");
+    std::string user = cli->getUsername();
+
+    sendResponse(fd, "001 " + nick + " :Welcome to the IRC Network, " + nick);
+    sendResponse(fd, "002 " + nick + " :Your host is localhost, running ft_irc");
+    sendResponse(fd, "003 " + nick + " :This server was created " + getDateCreated());
+    sendResponse(fd, "004 " + nick + " localhost ft_irc o o");
 }

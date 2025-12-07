@@ -39,7 +39,6 @@ bool isValidPassword(const char* pwd)
         if (pwd[i] < 32 || pwd[i] > 126)
             return false;
     }
-
     return true;
 }
 
