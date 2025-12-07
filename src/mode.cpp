@@ -51,6 +51,10 @@ void Server::MODE(const std::string &cmd, int fd)
     Channel *channel = getChannel(internalChannelName);
     std::string nickname = cli->getNickname();
     if (!channel)
+    {
+        sendResponse(fd, "403 " + nickname + " #" + internalChannelName + " :No such channel\r\n");
+        return;
+    }
     // Query current channel modes if only 2 tokens (MODE #channel)
     if (tokens.size() == 2)
     {
@@ -61,20 +65,21 @@ void Server::MODE(const std::string &cmd, int fd)
             modes += "i";
         if(channel->getTopicMode())
             modes += "t";
+        if(channel->getKeyMode() && channel->isChannelOperator(nickname))
+        {
+            modes += "k";
+            params += " " + channel->getChannelKey();
+        }
         if(channel->getLimitMode())
         {
             modes += "l";
-            params += " " + channel->getChannelLimit();
+            int limit = channel->getChannelLimit();
+            std::ostringstream oss;
+            oss << limit;
+            std::string limit_str = oss.str();
+            params += " " + limit_str;
         }
-        if(channel->isChannelOperator(nickname))
-        {
-            if(!channel->getKeyMode())
-            {
-                modes += "k";
-                params += " " + channel->getChannelKey();
-            }
-        }
-        sendResponse(fd, ":localhost 324 " + nickname + " " + internalChannelName + " +" + modes + params);
+        sendResponse(fd, ":localhost 324 " + nickname + " #" + internalChannelName + " " modes + params + "\r\n");
         return;
     }
 
@@ -84,7 +89,7 @@ void Server::MODE(const std::string &cmd, int fd)
     // Only operators can modify modes
     if (!channel->isChannelOperator(nickname))
     {
-        sendResponse(fd, "482 " + nickname + " " + internalChannelName + " :You're not channel operator\r\n");
+        sendResponse(fd, "482 " + nickname + " #" + internalChannelName + " :You're not channel operator\r\n");
         return;
     }
 
@@ -107,7 +112,7 @@ void Server::MODE(const std::string &cmd, int fd)
             else if (current_op == '-')
                 channel->setInviteMode(false);
 
-            std::string msg = ":" + nickname + " MODE " + internalChannelName + " " + current_op + "i\r\n";
+            std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "i\r\n";
             channel->broadcastMessage(msg);
             continue;
         }
@@ -119,7 +124,7 @@ void Server::MODE(const std::string &cmd, int fd)
             else if (current_op == '-')
                 channel->setTopicMode(false);
 
-            std::string msg = ":" + nickname + " MODE " + internalChannelName + " " + current_op + "t\r\n";
+            std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "t\r\n";
             channel->broadcastMessage(msg);
             continue;
         }
@@ -145,7 +150,7 @@ void Server::MODE(const std::string &cmd, int fd)
             else
                 channel->setAsMember(targetNick);
 
-            std::string msg = ":" + nickname + " MODE " + internalChannelName + " " + current_op + "o " + targetNick + "\r\n";
+            std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "o " + targetNick + "\r\n";
             channel->broadcastMessage(msg);
             continue;
         }
@@ -175,7 +180,7 @@ void Server::MODE(const std::string &cmd, int fd)
                 channel->setChannelKey("");
                 channel->setKeyMode(false);
             }
-            std::string msg = ":" + nickname + " MODE " + internalChannelName + " " + current_op + "k";
+            std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "k\r\n";
             channel->broadcastMessageToMembers(msg);
             if (channel->getKeyMode())
                 msg += " " + channel->getChannelKey();
@@ -192,24 +197,27 @@ void Server::MODE(const std::string &cmd, int fd)
                     sendResponse(fd, "461 MODE :Not enough parameters for +l\r\n");
                     continue;
                 }
-                std::string limit = params[param_index++];
-                if (!isValidLimit(limit))
+                std::string limitStr = params[param_index++];
+                if (!isValidLimit(limitStr))
                 {
                     sendResponse(fd, "501 MODE :Invalid limit\r\n");
                     continue;
                 }
-                channel->setChannelLimit(atoi(limit.c_str()));
+                int limit = atoi(limitStr.c_str());
+                channel->setChannelLimit(limit);
                 channel->setLimitMode(true);
+                std::ostringstream oss;
+                oss << limit;
+                std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "l " + oss.str() + "\r\n";
+                channel->broadcastMessage(msg);
             }
             else if (current_op == '-')
             {
                 channel->setChannelLimit(-1);
                 channel->setLimitMode(false);
+                std::string msg = ":" + nickname + " MODE #" + internalChannelName + " -l\r\n";
+                channel->broadcastMessage(msg);
             }
-            std::string msg = ":" + cli->getNickname() + " MODE " + internalChannelName + " " + current_op + "l";
-            if (channel->getLimitMode())
-                msg += " " + channel->getChannelLimit();
-            channel->broadcastMessage(msg);
             continue;
         }
         // Unknown mode

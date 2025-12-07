@@ -33,9 +33,27 @@ void Channel::setChannelLimit(int limit){channelLimit = limit;}
 
 void Channel::setTopicName(const std::string& topic){topicName = topic;}
 
-void Channel::setTimeChannelCreated(const std::string& time){timeChannelCreated = time;}
+void Channel::setTimeChannelCreated()
+{
+	time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    std::ostringstream oss;
+    oss << std::setw(4) << std::setfill('0') << (t->tm_year + 1900) << "-"
+        << std::setw(2) << std::setfill('0') << (t->tm_mon + 1) << "-"
+        << std::setw(2) << std::setfill('0') << t->tm_mday;
+	timeChannelCreated = oss.str();
+}
 
-void Channel::setTimeTopicCreated(const std::string& time){timeTopicCreated =time;}
+void Channel::setTimeTopicCreated()
+{
+	time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    std::ostringstream oss;
+    oss << std::setw(4) << std::setfill('0') << (t->tm_year + 1900) << "-"
+        << std::setw(2) << std::setfill('0') << (t->tm_mon + 1) << "-"
+        << std::setw(2) << std::setfill('0') << t->tm_mday;
+	timeTopicCreated = oss.str();
+}
 
 void Channel::setChannelKey(const std::string& key){channelKey =key ;}
 

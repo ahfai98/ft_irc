@@ -35,8 +35,8 @@ class Channel
 		void setChannelName(const std::string& name);
 		void setChannelLimit(int limit);
 		void setTopicName(const std::string& topic);
-		void setTimeChannelCreated(const std::string& time);
-		void setTimeTopicCreated(const std::string& time);
+		void setTimeChannelCreated();
+		void setTimeTopicCreated();
 		void setChannelKey(const std::string& key);
 		//Getters
 		bool getInviteMode() const;

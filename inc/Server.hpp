@@ -113,6 +113,10 @@ class Server
         //MODE command
         bool isValidKey(const std::string &key);
         bool isValidLimit(const std::string &limit);
+
+        //JOIN command
+        std::vector<std::string> splitString(const std::string &str, char delim);
+        bool isValidChannelName(const std::string &name);
 };
 
 #endif
