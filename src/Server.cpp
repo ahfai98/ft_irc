@@ -182,7 +182,6 @@ void Server::receiveClientData(int fd)
     if (bytes <= 0)
     {
         std::cout << "Client disconnected: fd=" << fd << std::endl;
-		removePollfd(fd);
         removeClient(fd);
         return;
     }
@@ -332,6 +331,7 @@ void Server::removeClient(int fd)
     Client* c = getClientByFd(fd);
     if (!c)
 		return;
+    removePollfd(fd);
 	removeClientFromAllChannels(c);
     clientsByNickname.erase(c->getNickname());
     clientsByFd.erase(fd);
