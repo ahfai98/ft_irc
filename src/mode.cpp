@@ -38,7 +38,7 @@ void Server::MODE(const std::string &cmd, int fd)
     std::string channelName = tokens[1];
 
     // Validate channel name starts with '#'
-    if (channelName.empty() || channelName[0] != '#')
+    if (!isValidChannelName(channelName))
     {
         sendResponse(fd, "403 " + channelName + " :No such channel\r\n");
         return;

@@ -20,7 +20,7 @@ void Server::INVITE(const std::string &cmd, int fd)
         sendResponse(fd, "401 " + inviterNick + " " + targetNick + " :No such nick/channel\r\n");
         return;
     }
-    if (channelName.empty() || channelName[0] != '#')
+    if (!isValidChannelName(channelName))
     {
         sendResponse(fd, "403 " + inviterNick + " " + channelName + " :No such channel\r\n");
         return;

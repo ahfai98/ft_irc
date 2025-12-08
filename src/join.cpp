@@ -115,6 +115,8 @@ void Server::JOIN(const std::string &cmd, int fd)
             }
             // Add client
             ch->addMember(cli);
+            if (ch->isInvited(nickname))
+                ch->removeInvited(nickname);
             // Send JOIN, NAMES, TOPIC messages
             std::string joinMsg = ":" + nickname + " JOIN #" + chName + "\r\n";
             ch->broadcastMessage(joinMsg); // broadcast JOIN to other members
