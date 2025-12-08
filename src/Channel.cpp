@@ -159,7 +159,17 @@ Client* Channel::getClientByNickname(std::vector<Client*>& vec, const std::strin
 Client* Channel::getMemberByFd(int fd) { return getClientByFd(members, fd); }
 Client* Channel::getOperatorByFd(int fd) { return getClientByFd(operators, fd); }
 Client* Channel::getMemberByNickname(const std::string& nickname) { return getClientByNickname(members, nickname); }
+
+Client* Channel::getFirstMember()
+{
+	if (members.size() != 0)
+		return members[0];
+	return NULL;
+}
+
 Client* Channel::getOperatorByNickname(const std::string& nickname) { return getClientByNickname(operators, nickname); }
+
+int 	Channel::getOperatorsCount()const {return operators.size();}
 const std::string& Channel::getTopicSetter() const{ return topicSetter;}
 
 //Utility Methods

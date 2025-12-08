@@ -39,32 +39,37 @@ void Server::NICK(const std::string &cmd, int fd)
         sendResponse(fd, "432 " + newNickname + " :Erroneous nickname");
         return;
     }
+    if (cli->getNickname() == newNickname)
+        return ;
     // Check for nickname collision
     std::map<std::string, Client*>::iterator it = clientsByNickname.find(newNickname);
     if (it != clientsByNickname.end() && it->second != cli)
     {
-        sendResponse(fd, "433 * " + newNickname + " :Nickname is already in use");
-        return;
+            sendResponse(fd, "433 * " + newNickname + " :Nickname is already in use");
+            return;
     }
-
     // Remove old nickname from map if exists
-    if (cli->getNickname() != "*" && clientsByNickname[cli->getNickname()] == cli)
-        clientsByNickname.erase(cli->getNickname());
+    std::string oldNickname = cli->getNickname();
+    if (oldNickname != "*" && clientsByNickname[oldNickname] == cli)
+        clientsByNickname.erase(oldNickname);
 
+    cli->setNickname(newNickname);
+    clientsByNickname[newNickname] = cli;
+    std::string oldMask = oldNickname == "*" ? "*" : oldNickname + "!" + cli->getUsername() + "@localhost";
     // Broadcast only if registered
     if (cli->getRegistered())
     {
-        std::string oldNickname = cli->getNickname();
         for (std::map<std::string, Channel*>::iterator cit = channels.begin(); cit != channels.end(); ++cit)
         {
             Channel *ch = cit->second;
             if (ch->isInvited(oldNickname))
+            {
                 ch->removeInvited(oldNickname);
-            if (ch->isInChannel(oldNickname))
-                ch->broadcastMessage(":" + oldNickname + " NICK :" + newNickname);
+                ch->addInvited(newNickname);
+            }
+            if (ch->isInChannel(newNickname))
+                ch->broadcastMessageExcept(":" + oldMask + " NICK :" + newNickname + "\r\n", fd);
         }
     }
-    // Set new nickname
-    cli->setNickname(newNickname);
-    clientsByNickname[newNickname] = cli;
+    sendResponse(fd, ":" + oldMask + " NICK :" + newNickname + "\r\n");
 }

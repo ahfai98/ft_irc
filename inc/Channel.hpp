@@ -66,7 +66,9 @@ class Channel
 		Client *getMemberByFd(int fd);
 		Client *getOperatorByFd(int fd);
 		Client *getMemberByNickname(const std::string& nickname);
+		Client *getFirstMember();
 		Client *getOperatorByNickname(const std::string& nickname);
+		int 	getOperatorsCount() const;
 
 		//Utility Methods
 		void addMember(Client* c);

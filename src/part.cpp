@@ -43,13 +43,17 @@ void Server::PART(const std::string &cmd, int fd)
         std::ostringstream oss;
         oss << ":" << client->getPrefix() << " PART " << chName << " :" << partMessage << "\r\n";
         ch->broadcastMessage(oss.str());
-        if (ch->isChannelOperator(nickname))
+        ch->removeOperatorByFd(fd);
+        ch->removeMemberByFd(fd);
+        if (ch->getChannelTotalClientCount() == 0)
+            removeChannel(internalChannelName);
+        else if (ch->getOperatorsCount() == 0)
         {
-            ch->removeOperatorByFd(fd);
-            if (ch->getChannelTotalClientCount() == 0)
-                removeChannel(chName);
+            Client* promote = ch->getFirstMember();
+            ch->setAsOperator(promote->getNickname());
+            // send MODE broadcast
+            std::string msg = ":localhost " + nickname + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
+            ch->broadcastMessage(msg);
         }
-        else
-            ch->removeMemberByFd(fd);
     }
 }

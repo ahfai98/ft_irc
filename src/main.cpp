@@ -66,7 +66,6 @@ int main(int argc, char* argv[])
     std::string password = argv[2];
 
     Server ircServer;
-
     try
     {
         // Setup signal handlers
@@ -82,6 +81,5 @@ int main(int argc, char* argv[])
         std::cerr << "Server failed: " << e.what() << std::endl;
         return 1;
     }
-
     return 0;
 }

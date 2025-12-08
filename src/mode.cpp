@@ -149,7 +149,6 @@ void Server::MODE(const std::string &cmd, int fd)
                 channel->setAsOperator(targetNick);
             else
                 channel->setAsMember(targetNick);
-
             std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "o " + targetNick + "\r\n";
             channel->broadcastMessage(msg);
             continue;

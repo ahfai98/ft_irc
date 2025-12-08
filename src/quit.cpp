@@ -32,6 +32,16 @@ void Server::QUIT(const std::string &cmd, int fd)
         std::ostringstream oss;
         oss << ":" << prefix << " QUIT :" << quitMessage << "\r\n";
         ch->broadcastMessage(oss.str());
+        if (ch->getChannelTotalClientCount() == 1)
+            continue;
+        else if (ch->isChannelOperator(client->getNickname()) && ch->getOperatorsCount() == 1)
+        {
+            Client* promote = ch->getFirstMember();
+            ch->setAsOperator(promote->getNickname());
+            // send MODE broadcast
+            std::string msg = ":localhost " + client->getNickname() + " MODE #" + ch->getChannelName() + " +o " + promote->getNickname() + "\r\n";
+            ch->broadcastMessage(msg);
+        }
     }
     removeClient(fd);
 }
