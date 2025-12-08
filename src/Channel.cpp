@@ -8,6 +8,7 @@ Channel::Channel()
 	channelName(),
 	channelLimit(-1),
 	topicName(),
+	topicSetter(),
 	timeChannelCreated(),
 	timeTopicCreated(),
 	channelKey()
@@ -32,6 +33,8 @@ void Channel::setChannelName(const std::string& name){channelName = name;}
 void Channel::setChannelLimit(int limit){channelLimit = limit;}
 
 void Channel::setTopicName(const std::string& topic){topicName = topic;}
+
+void Channel::setTopicSetter(const std::string& setter){topicSetter = setter;}
 
 void Channel::setTimeChannelCreated()
 {
@@ -157,6 +160,7 @@ Client* Channel::getMemberByFd(int fd) { return getClientByFd(members, fd); }
 Client* Channel::getOperatorByFd(int fd) { return getClientByFd(operators, fd); }
 Client* Channel::getMemberByNickname(const std::string& nickname) { return getClientByNickname(members, nickname); }
 Client* Channel::getOperatorByNickname(const std::string& nickname) { return getClientByNickname(operators, nickname); }
+const std::string& Channel::getTopicSetter() const{ return topicSetter;}
 
 //Utility Methods
 void Channel::addMember(Client* c)
@@ -289,3 +293,4 @@ bool Channel::isInvited(const std::string& nickname) const
 	}
 	return false;
 }
+

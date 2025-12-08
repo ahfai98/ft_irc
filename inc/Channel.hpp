@@ -16,6 +16,7 @@ class Channel
 		std::string channelName;
 		int channelLimit;
 		std::string topicName;
+		std::string topicSetter;
 		std::string timeChannelCreated;
 		std::string timeTopicCreated;
 		std::string channelKey;
@@ -35,6 +36,7 @@ class Channel
 		void setChannelName(const std::string& name);
 		void setChannelLimit(int limit);
 		void setTopicName(const std::string& topic);
+		void setTopicSetter(const std::string& setter);
 		void setTimeChannelCreated();
 		void setTimeTopicCreated();
 		void setChannelKey(const std::string& key);
@@ -47,6 +49,7 @@ class Channel
 		int getChannelLimit() const;
 		int getChannelTotalClientCount() const;
 		const std::string& getTopicName() const;
+		const std::string& getTopicSetter() const;
 		const std::string& getTimeChannelCreated() const;
 		const std::string& getTimeTopicCreated() const;
 		const std::string& getChannelKey() const;
