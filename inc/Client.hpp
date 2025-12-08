@@ -41,9 +41,6 @@ class Client
 		//Utility Methods
 		void clearBuffer();
 		void addChannelInvites(const std::string& name);
-		void removeChannelInvites(const std::string& name);
-		void addJoinedChannels(const std::string& name);  
-		void removeJoinedChannels(const std::string& name);  
 		bool isInChannel(const std::string& name) const;
 };
 

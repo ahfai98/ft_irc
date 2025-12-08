@@ -45,3 +45,6 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+test:
+	valgrind --leak-check=full --track-origins=yes --log-file=val.txt ./ircserv 6667 pass

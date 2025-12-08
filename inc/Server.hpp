@@ -75,17 +75,12 @@ class Server
         void addClient(Client* cli);
         void addChannel(Channel* ch);
         void removeClient(int fd);
-        void removeChannel(const std::string& ch);
         void clearClients();
         void clearChannels();
         void removePollfd(int fd);
         void removeClientFromAllChannels(Client *cli);
 
         void sendResponse(int fd, const std::string &message);
-        void sendClientError(int fd, int code, const std::string &clientName, const std::string &message);
-        void sendChannelError(int fd, int code, const std::string &clientName,
-                              const std::string &channelName, const std::string &message);
-        
         std::vector<std::string> splitCommand(const std::string &cmdLine);
 
         void initCommandMap();
@@ -121,6 +116,9 @@ class Server
 
         //TOPIC command
         std::string trim(std::string &str);
+
+        //PART and QUIT command
+        void cleanupEmptyChannels();
 };
 
 #endif

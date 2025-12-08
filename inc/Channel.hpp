@@ -60,7 +60,6 @@ class Channel
 
 		std::string getNamesList() const;
 
-
 		Client* getClientByFd(std::vector<Client*>& vec, int fd);
 		Client* getClientByNickname(std::vector<Client*>& vec, const std::string& nickname);
 		Client *getMemberByFd(int fd);

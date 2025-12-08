@@ -89,5 +89,6 @@ void Server::KICK(const std::string &cmd, int fd)
             ch->removeMemberByFd(target->getSocketFd());
         else
             ch->removeOperatorByFd(target->getSocketFd());
+        cleanupEmptyChannels();
     }
 }

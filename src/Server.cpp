@@ -36,8 +36,10 @@ Server::Server()
 
 Server::~Server()
 {
-	clearClients();
-    clearChannels();
+    if (!clientsByFd.empty())
+        clearClients();
+    if (!channels.empty())
+        clearChannels();
 }
 
 int Server::getPort() const { return port; }
@@ -173,10 +175,11 @@ void Server::acceptClient()
 
 void Server::receiveClientData(int fd)
 {
-    char buff[512];
     Client* cli = getClientByFd(fd);
     if (!cli)
-        return;
+        return; // Client already removed, avoid use-after-free
+
+    char buff[512];
     ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
 
     // Client disconnected or error
@@ -188,18 +191,29 @@ void Server::receiveClientData(int fd)
     }
 
     // Append new data to client's buffer
-    cli->setBuffer(cli->getBuffer() + std::string(buff, bytes));
+    std::string currentBuffer = cli->getBuffer() + std::string(buff, bytes);
+    cli->setBuffer(currentBuffer);
 
+    // Reference updated buffer safely
     std::string& buf = cli->getBuffer();
     size_t pos;
 
     // Extract and execute complete commands ending with \r\n
     while ((pos = buf.find("\r\n")) != std::string::npos)
     {
+        Client* checkCli = getClientByFd(fd);
+        if (!checkCli)
+            return; // Client might have been removed by a command (like QUIT)
+
         std::string command = buf.substr(0, pos);
 
         // Execute the command
         parseExecuteCommand(command, fd);
+
+        // Stop immediately if client was removed during command execution
+        checkCli = getClientByFd(fd);
+        if (!checkCli)
+            return;
 
         // Remove processed command + \r\n from buffer
         buf.erase(0, pos + 2);
@@ -325,25 +339,27 @@ void Server::addClient(Client* cli)
 void Server::removeClient(int fd)
 {
     Client* c = getClientByFd(fd);
-    if (!c)
-        return;
+    if (!c) return;
 
-    // 1. Remove client from pollfds first
+    // Remove pollfd first to prevent poll events
     removePollfd(fd);
 
-    // 2. Remove client from all channels safely
+    // Remove client from all channels safely
     removeClientFromAllChannels(c);
 
-    // 3. Remove client from maps
+    // Erase nickname before deletion to avoid dangling map
     clientsByNickname.erase(c->getNickname());
     clientsByFd.erase(fd);
 
-    // 4. Close socket before deleting client
+    // Close socket and delete client object
     close(fd);
-
-    // 5. Delete client
     delete c;
+
+    // Cleanup channels with zero clients
+    cleanupEmptyChannels();
 }
+
+
 
 
 void Server::removeClientFromAllChannels(Client *cli)
@@ -351,38 +367,17 @@ void Server::removeClientFromAllChannels(Client *cli)
     if (!cli)
         return;
 
-    // 1. Copy the joined channel names to avoid iterator invalidation
-    std::vector<std::string> joined = cli->getJoinedChannels();
-    std::vector<std::string> emptyChannels;
-
-    // 2. Remove client from each channel
-    for (std::vector<std::string>::iterator it = joined.begin(); it != joined.end(); ++it)
+    for (std::map<std::string, Channel *>::iterator it = channels.begin(); it != channels.end(); ++it)
     {
-        Channel* ch = getChannel(*it);
-        if (!ch)
-            continue;
-
+        Channel* ch = it->second;
         // Remove client from members and operators
-        ch->removeMemberByFd(cli->getSocketFd());
-        ch->removeOperatorByFd(cli->getSocketFd());
-
-        // Mark empty channels to delete later
-        if (ch->getChannelTotalClientCount() == 0)
-            emptyChannels.push_back(*it);
-    }
-
-    // 3. Remove empty channels after iteration
-    for (std::vector<std::string>::iterator it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
-        removeChannel(*it);
-
-    // 4. Remove invitations for this client
-    for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
-    {
         if (it->second->isInvited(cli->getNickname()))
             it->second->removeInvited(cli->getNickname());
+        ch->removeMemberByFd(cli->getSocketFd());
+        ch->removeOperatorByFd(cli->getSocketFd());
     }
+    cleanupEmptyChannels();
 }
-
 
 void Server::addChannel(Channel* ch)
 {
@@ -390,20 +385,6 @@ void Server::addChannel(Channel* ch)
 		return;
     channels[ch->getChannelName()] = ch;
 }
-
-void Server::removeChannel(const std::string& name)
-{
-    Channel* ch = getChannel(name);
-    if (!ch)
-        return;
-
-    // 1. Remove from map first
-    channels.erase(name);
-
-    // 2. Delete the channel object
-    delete ch;
-}
-
 
 // Utility
 void Server::clearClients()
@@ -469,22 +450,6 @@ void Server::sendResponse(int fd, const std::string &message)
         std::cerr << "Failed to send to fd " << fd << std::endl;
 }
 
-void Server::sendClientError(int fd, int code, const std::string &clientName, const std::string &message)
-{
-    std::stringstream ss;
-    ss << ":localhost " << code << " " << clientName << " " << message;
-    sendResponse(fd, ss.str());
-}
-
-// Sends an error message to a client for a specific channel
-void Server::sendChannelError(int fd, int code, const std::string &clientName,
-                              const std::string &channelName, const std::string &message)
-{
-    std::stringstream ss;
-    ss << ":localhost " << code << " " << clientName << " " << channelName << " " << message;
-    sendResponse(fd, ss.str());
-}
-
 void Server::sendWelcome(Client *cli)
 {
     int fd = cli->getSocketFd();
@@ -495,4 +460,23 @@ void Server::sendWelcome(Client *cli)
     sendResponse(fd, "002 " + nick + " :Your host is localhost, running ft_irc");
     sendResponse(fd, "003 " + nick + " :This server was created " + getDateCreated());
     sendResponse(fd, "004 " + nick + " localhost ft_irc o o");
+}
+
+void Server::cleanupEmptyChannels()
+{
+    std::vector<std::string> toErase;
+
+    for (std::map<std::string, Channel*>::iterator it = channels.begin();
+         it != channels.end(); ++it)
+    {
+        if (it->second && it->second->getChannelTotalClientCount() == 0)
+            toErase.push_back(it->first);
+    }
+
+    for (size_t i = 0; i < toErase.size(); ++i)
+    {
+        Channel* ch = channels[toErase[i]];
+        delete ch;
+        channels.erase(toErase[i]);
+    }
 }

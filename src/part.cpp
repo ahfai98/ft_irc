@@ -45,9 +45,8 @@ void Server::PART(const std::string &cmd, int fd)
         ch->broadcastMessage(oss.str());
         ch->removeOperatorByFd(fd);
         ch->removeMemberByFd(fd);
-        if (ch->getChannelTotalClientCount() == 0)
-            removeChannel(internalChannelName);
-        else if (ch->getOperatorsCount() == 0)
+        cleanupEmptyChannels();
+        if (ch->getOperatorsCount() == 0 && ch->getChannelTotalClientCount() > 0)
         {
             Client* promote = ch->getFirstMember();
             ch->setAsOperator(promote->getNickname());

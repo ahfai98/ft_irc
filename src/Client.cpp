@@ -45,30 +45,6 @@ void Client::setIpAddress(const std::string& ipAddress){this->ipAddress = ipAddr
 
 void Client::clearBuffer(){receiveBuffer.clear();}
 
-void Client::addJoinedChannels(const std::string& name)
-{
-	std::vector<std::string>::iterator it;
-	for (it = joinedChannels.begin(); it != joinedChannels.end(); ++it)
-	{
-		if (*it == name)
-			return;
-	}
-	joinedChannels.push_back(name);
-}
-
-void Client::removeJoinedChannels(const std::string& name)
-{
-	std::vector<std::string>::iterator it;
-	for (it = joinedChannels.begin(); it != joinedChannels.end(); ++it)
-	{
-		if (*it == name)
-		{
-			joinedChannels.erase(it);
-			return;
-		}
-	}
-}
-
 bool Client::isInChannel(const std::string& name) const
 {
 	std::vector<std::string>::const_iterator it;
