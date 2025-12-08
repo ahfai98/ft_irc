@@ -326,37 +326,63 @@ void Server::removeClient(int fd)
 {
     Client* c = getClientByFd(fd);
     if (!c)
-		return;
+        return;
+
+    // 1. Remove client from pollfds first
     removePollfd(fd);
-	removeClientFromAllChannels(c);
+
+    // 2. Remove client from all channels safely
+    removeClientFromAllChannels(c);
+
+    // 3. Remove client from maps
     clientsByNickname.erase(c->getNickname());
     clientsByFd.erase(fd);
-	close(fd);
+
+    // 4. Close socket before deleting client
+    close(fd);
+
+    // 5. Delete client
     delete c;
 }
 
+
 void Server::removeClientFromAllChannels(Client *cli)
 {
-	std::vector<std::string> joined = cli->getJoinedChannels();
-	std::vector<std::string>::iterator it;
-	for (it = joined.begin(); it != joined.end(); ++it)
-	{
-		Channel* ch = getChannel(*it);
-		ch->removeMemberByFd(cli->getSocketFd());
-		ch->removeOperatorByFd(cli->getSocketFd());
-		if (ch->getChannelTotalClientCount() == 0)
-			removeChannel(ch->getChannelName());
-	}
-    std::map<std::string, Channel*>::iterator it1;
-    for (it1 = channels.begin(); it1 != channels.end(); ++it1)
-	{
-		if (it1->second->isInvited(cli->getNickname()))
-		{
-			it1->second->removeInvited(cli->getNickname());
-			continue;
-		}
-	}
+    if (!cli)
+        return;
+
+    // 1. Copy the joined channel names to avoid iterator invalidation
+    std::vector<std::string> joined = cli->getJoinedChannels();
+    std::vector<std::string> emptyChannels;
+
+    // 2. Remove client from each channel
+    for (std::vector<std::string>::iterator it = joined.begin(); it != joined.end(); ++it)
+    {
+        Channel* ch = getChannel(*it);
+        if (!ch)
+            continue;
+
+        // Remove client from members and operators
+        ch->removeMemberByFd(cli->getSocketFd());
+        ch->removeOperatorByFd(cli->getSocketFd());
+
+        // Mark empty channels to delete later
+        if (ch->getChannelTotalClientCount() == 0)
+            emptyChannels.push_back(*it);
+    }
+
+    // 3. Remove empty channels after iteration
+    for (std::vector<std::string>::iterator it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
+        removeChannel(*it);
+
+    // 4. Remove invitations for this client
+    for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    {
+        if (it->second->isInvited(cli->getNickname()))
+            it->second->removeInvited(cli->getNickname());
+    }
 }
+
 
 void Server::addChannel(Channel* ch)
 {
@@ -367,31 +393,56 @@ void Server::addChannel(Channel* ch)
 
 void Server::removeChannel(const std::string& name)
 {
-    Channel* c = getChannel(name);
-    if (!c)
-		return;
+    Channel* ch = getChannel(name);
+    if (!ch)
+        return;
+
+    // 1. Remove from map first
     channels.erase(name);
-    delete c;
+
+    // 2. Delete the channel object
+    delete ch;
 }
+
 
 // Utility
 void Server::clearClients()
 {
-    std::map<int, Client*>::iterator it;
-    for (it = clientsByFd.begin(); it != clientsByFd.end(); ++it)
-	{
-		close(it->second->getSocketFd());
-        delete it->second;
-	}
+    // Copy client pointers to a temporary vector to safely delete
+    std::vector<Client*> tempClients;
+    for (std::map<int, Client*>::iterator it = clientsByFd.begin(); it != clientsByFd.end(); ++it)
+        tempClients.push_back(it->second);
+
+    // Close all sockets and delete clients
+    for (std::vector<Client*>::iterator it = tempClients.begin(); it != tempClients.end(); ++it)
+    {
+        if (*it)
+        {
+            close((*it)->getSocketFd());
+            delete *it;
+        }
+    }
+
+    // Clear the maps after deletion
     clientsByFd.clear();
     clientsByNickname.clear();
 }
 
+
 void Server::clearChannels()
 {
-    std::map<std::string, Channel*>::iterator it;
-    for (it = channels.begin(); it != channels.end(); ++it)
-        delete it->second;
+    // Copy all channel pointers to a temporary vector to safely delete
+    std::vector<Channel*> tempChannels;
+    for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+        tempChannels.push_back(it->second);
+
+    // Delete all channels
+    for (std::vector<Channel*>::iterator it = tempChannels.begin(); it != tempChannels.end(); ++it)
+    {
+        if (*it)
+            delete *it;
+    }
+    // Clear the map after deletion
     channels.clear();
 }
 

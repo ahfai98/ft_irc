@@ -95,17 +95,14 @@ void Server::JOIN(const std::string &cmd, int fd)
         {
             if (ch->isInChannel(nickname))
                 continue;
-            if (ch->getKeyMode() && ch->getChannelKey() != chPassword)
-            {
-                if (!ch->getInviteMode() || (ch->getInviteMode() && !ch->isInvited(nickname)))
-                {
-                    sendResponse(fd, "475 " + nickname + " " + chName + " :Cannot join channel (+k) - bad key\r\n");
-                    continue;
-                }
-            }
             if (ch->getInviteMode() && !ch->isInvited(nickname))
             {
                 sendResponse(fd, "473 " + nickname + " " + chName + " :Cannot join channel (+i)\r\n");
+                continue;
+            }
+            if (ch->getKeyMode() && ch->getChannelKey() != chPassword)
+            {
+                sendResponse(fd, "475 " + nickname + " " + chName + " :Cannot join channel (+k) - bad key\r\n");
                 continue;
             }
             if (ch->getLimitMode() && ch->getChannelTotalClientCount() >= ch->getChannelLimit())

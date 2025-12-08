@@ -148,7 +148,27 @@ void Server::MODE(const std::string &cmd, int fd)
             if (current_op == '+')
                 channel->setAsOperator(targetNick);
             else
-                channel->setAsMember(targetNick);
+            {
+                if (targetNick == nickname)
+                {
+                    if (channel->getOperatorsCount() == 1 && channel->getChannelTotalClientCount() != 1)
+                    {
+                        Client* promote = channel->getFirstMember();
+                        channel->setAsOperator(promote->getNickname());
+                        channel->setAsMember(targetNick);
+                        // send MODE broadcast
+                        std::string msg = ":localhost " + nickname + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
+                        channel->broadcastMessage(msg);
+                    }
+                    else if(channel->getOperatorsCount() == 1 && channel->getChannelTotalClientCount() == 1)
+                    {
+                        sendResponse(fd, "441 " + nickname + " " + targetNick + " :Channel must have one operator. Cannot demote.\r\n");
+                        continue;
+                    }
+                }
+                else
+                    channel->setAsMember(targetNick);
+            }
             std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "o " + targetNick + "\r\n";
             channel->broadcastMessage(msg);
             continue;
@@ -164,7 +184,6 @@ void Server::MODE(const std::string &cmd, int fd)
                     sendResponse(fd, "461 MODE :Not enough parameters for +k\r\n");
                     continue;
                 }
-
                 std::string key = params[param_index++];
                 if(!isValidKey(key))
                 {
@@ -182,7 +201,7 @@ void Server::MODE(const std::string &cmd, int fd)
             std::string msg = ":" + nickname + " MODE #" + internalChannelName + " " + current_op + "k\r\n";
             channel->broadcastMessageToMembers(msg);
             if (channel->getKeyMode())
-                msg += " " + channel->getChannelKey();
+                msg += " " + channel->getChannelKey() + "\r\n";
             channel->broadcastMessageToOperators(msg);
             continue;
         }
