@@ -79,3 +79,8 @@ bool Client::isInChannel(const std::string& name) const
 	}
 	return false;
 }
+
+std::string Client::getPrefix() const
+{
+    return getNickname() + "!" + getUsername() + "@" + "localhost";
+}

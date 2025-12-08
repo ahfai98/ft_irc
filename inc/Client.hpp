@@ -29,6 +29,7 @@ class Client
 		std::string getNickname() const;
 		std::string& getBuffer() ;
 		const std::vector<std::string>& getJoinedChannels() const;
+		std::string getPrefix() const;
 		//Setters
 		void setSocketFd(int fd);
 		void setPasswordAuthenticated(bool value);
