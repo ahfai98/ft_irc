@@ -16,6 +16,7 @@ void Server::initCommandMap()
     commandMap["PRIVMSG"]= &Server::PRIVMSG;
     commandMap["INVITE"] = &Server::INVITE;
     commandMap["PING"]   = &Server::PING;
+    commandMap["NOTICE"]= &Server::NOTICE;
 }
 
 Server::Server()
@@ -232,9 +233,7 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         return;
 
     // Trim leading whitespace
-    size_t first = cmd.find_first_not_of(" \t\v");
-    if (first != std::string::npos)
-        cmd = cmd.substr(first);
+    cmd = trim(cmd);
 
     std::vector<std::string> tokens = splitCommand(cmd);
     if (tokens.empty())
@@ -244,9 +243,6 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     std::string command = tokens[0];
     for (size_t i = 0; i < command.size(); ++i)
         command[i] = toupper(command[i]);
-
-    if (command == "BONG")
-        return;
 
     CommandHandler handler = NULL;
     std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);

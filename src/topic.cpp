@@ -2,12 +2,14 @@
 
 static const size_t MAX_TOPIC_LENGTH = 332;
 
-static std::string trim(const std::string &str)
+std::string Server::trim(std::string &str)
 {
     size_t start = 0;
-    while (start < str.size() && std::isspace(str[start])) ++start;
+    while (start < str.size() && std::isspace(str[start]))
+        ++start;
     size_t end = str.size();
-    while (end > start && std::isspace(str[end - 1])) --end;
+    while (end > start && std::isspace(str[end - 1]))
+        --end;
     return str.substr(start, end - start);
 }
 

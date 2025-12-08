@@ -23,14 +23,7 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
 
     if (!message.empty() && message[0] == ':')
         message = message.substr(1);
-    // Trim whitespace
-    size_t start = 0;
-    while (start < message.size() && std::isspace(message[start]))
-        ++start;
-    size_t end = message.size();
-    while (end > start && std::isspace(message[end - 1]))
-        --end;
-    message = message.substr(start, end - start);
+    message = trim(message);
     if (message.empty()) {
         sendResponse(fd, "412 " + nickname + " :No text to send\r\n");
         return;

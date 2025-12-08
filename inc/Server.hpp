@@ -104,6 +104,7 @@ class Server
         void PRIVMSG(const std::string &cmd, int fd);
         void INVITE(const std::string &cmd, int fd);
         void PING(const std::string &cmd, int fd);
+        void NOTICE(const std::string &cmd, int fd);
         
         void sendWelcome(Client *cli);
 
@@ -117,6 +118,9 @@ class Server
         //JOIN command
         std::vector<std::string> splitString(const std::string &str, char delim);
         bool isValidChannelName(const std::string &name);
+
+        //TOPIC command
+        std::string trim(std::string &str);
 };
 
 #endif
