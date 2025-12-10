@@ -9,13 +9,13 @@ void Server::PASS(const std::string &cmd, int fd)
     std::vector<std::string> tokens = splitCommand(cmd);
     if (tokens.size() < 2)
     {
-        sendResponse(fd, "461 PASS :Not enough parameters");
+        sendResponse(fd, ":ircserv 461 * PASS :Not enough parameters");
         return;
     }
 
-    if (cli->getPasswordAuthenticated())
+    if (cli->getRegistered())
     {
-        sendResponse(fd, "462 PASS :You may not reregister");
+        sendResponse(fd, ":ircserv 462 * PASS :You may not reregister");
         return;
     }
     std::string pass = tokens[1];
@@ -24,7 +24,8 @@ void Server::PASS(const std::string &cmd, int fd)
 
     if (pass != password)
     {
-        sendResponse(fd, "464 PASS :Password incorrect");
+        cli->setPasswordAuthenticated(false);
+        sendResponse(fd, ":ircserv 464 * PASS :Password incorrect");
         return;
     }
     cli->setPasswordAuthenticated(true);

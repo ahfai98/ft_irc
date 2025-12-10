@@ -2,11 +2,11 @@
 
 void Server::PRIVMSG(const std::string &cmd, int fd)
 {
-    Client *client = getClientByFd(fd);
-    if (!client)
+    Client *cli = getClientByFd(fd);
+    if (!cli)
         return;
     std::vector<std::string> tokens = splitCommand(cmd);
-    std::string nickname = client->getNickname();
+    std::string nickname = cli->getNickname();
     if (tokens.size() < 2)
     {
         sendResponse(fd, "411 " + nickname + " :No recipient given\r\n");
@@ -66,7 +66,7 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
                 continue;
             }
             std::ostringstream oss;
-            oss << ":" << client->getPrefix() << " PRIVMSG " << target << " :" << message << "\r\n";
+            oss << ":" << cli->getPrefix() << " PRIVMSG " << target << " :" << message << "\r\n";
             ch->broadcastMessageExcept(oss.str(), fd); // exclude sender
         }
         else
@@ -78,7 +78,7 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
                 continue;
             }
             std::ostringstream oss;
-            oss << ":" << client->getPrefix() << " PRIVMSG " << target << " :" << message << "\r\n";
+            oss << ":" << cli->getPrefix() << " PRIVMSG " << target << " :" << message << "\r\n";
             sendResponse(targetClient->getSocketFd(), oss.str());
         }
     }

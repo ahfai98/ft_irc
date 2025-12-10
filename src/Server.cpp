@@ -456,10 +456,10 @@ void Server::sendWelcome(Client *cli)
     std::string nick = cli->getNickname();
     std::string user = cli->getUsername();
 
-    sendResponse(fd, "001 " + nick + " :Welcome to the IRC Network, " + nick);
-    sendResponse(fd, "002 " + nick + " :Your host is localhost, running ft_irc");
-    sendResponse(fd, "003 " + nick + " :This server was created " + getDateCreated());
-    sendResponse(fd, "004 " + nick + " localhost ft_irc o o");
+    sendResponse(fd, ":ircserv 001 " + nick + " :Welcome to the IRC Network, " + nick + "\r\n");
+    sendResponse(fd, ":ircserv 002 " + nick + " :Your host is ircserv, running ft_irc" + "\r\n");
+    sendResponse(fd, ":ircserv 003 " + nick + " :This server was created " + getDateCreated()+ "\r\n");
+    sendResponse(fd, ":ircserv 004 " + nick + " ircserv ft_irc o o"+ "\r\n");
 }
 
 void Server::cleanupEmptyChannels()

@@ -2,8 +2,8 @@
 
 void Server::NOTICE(const std::string &cmd, int fd)
 {
-    Client *client = getClientByFd(fd);
-    if (!client)
+    Client *cli = getClientByFd(fd);
+    if (!cli)
         return;
     std::vector<std::string> tokens = splitCommand(cmd);
     if (tokens.size() < 2)
@@ -29,10 +29,10 @@ void Server::NOTICE(const std::string &cmd, int fd)
             Channel *ch = getChannel(chName);
             if (!ch)
                 continue;
-            if (!ch->isInChannel(client->getNickname()))
+            if (!ch->isInChannel(cli->getNickname()))
                 continue;
             std::ostringstream oss;
-            oss << ":" << client->getPrefix() << " NOTICE " << target << " :" << message << "\r\n";
+            oss << ":" << cli->getPrefix() << " NOTICE " << target << " :" << message << "\r\n";
             ch->broadcastMessageExcept(oss.str(), fd);
         }
         else
@@ -41,7 +41,7 @@ void Server::NOTICE(const std::string &cmd, int fd)
             if (!targetClient)
                 continue;
             std::ostringstream oss;
-            oss << ":" << client->getPrefix() << " NOTICE " << target << " :" << message << "\r\n";
+            oss << ":" << cli->getPrefix() << " NOTICE " << target << " :" << message << "\r\n";
             sendResponse(targetClient->getSocketFd(), oss.str());
         }
     }

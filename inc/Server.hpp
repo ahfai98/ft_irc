@@ -43,6 +43,7 @@ class Server
         struct sockaddr_in address;
         std::map<int, Client*> clientsByFd;
         std::map<std::string, Client*> clientsByNickname;
+        std::vector<std::string> nicknames;
         std::map<std::string, Channel*> channels;
         std::map<std::string, CommandHandler> commandMap;
         Server(Server const &src);

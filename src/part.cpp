@@ -2,11 +2,11 @@
 
 void Server::PART(const std::string &cmd, int fd)
 {
-    Client *client = getClientByFd(fd);
-    if (!client)
+    Client *cli = getClientByFd(fd);
+    if (!cli)
         return;
     std::vector<std::string> tokens = splitCommand(cmd);
-    std::string nickname = client->getNickname();
+    std::string nickname = cli->getNickname();
     if (tokens.size() < 2)
     {
         sendResponse(fd, "461 " + nickname + " PART :Not enough parameters\r\n");
@@ -41,7 +41,7 @@ void Server::PART(const std::string &cmd, int fd)
             continue;
         }
         std::ostringstream oss;
-        oss << ":" << client->getPrefix() << " PART " << chName << " :" << partMessage << "\r\n";
+        oss << ":" << cli->getPrefix() << " PART " << chName << " :" << partMessage << "\r\n";
         ch->broadcastMessage(oss.str());
         ch->removeOperatorByFd(fd);
         ch->removeMemberByFd(fd);
@@ -51,7 +51,7 @@ void Server::PART(const std::string &cmd, int fd)
             Client* promote = ch->getFirstMember();
             ch->setAsOperator(promote->getNickname());
             // send MODE broadcast
-            std::string msg = ":localhost " + nickname + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
+            std::string msg = ": " + cli->getPrefix() + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
             ch->broadcastMessage(msg);
         }
     }

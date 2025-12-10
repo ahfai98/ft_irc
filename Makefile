@@ -1,7 +1,7 @@
 
 NAME = ircserv
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -MP -Iinc
+CFLAGS = -Wall -Wextra -Werror  -std=c++98  -MMD -MP -Iinc
 
 SRC_DIR = src
 OBJ_DIR = obj

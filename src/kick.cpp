@@ -2,10 +2,10 @@
 
 void Server::KICK(const std::string &cmd, int fd)
 {
-    Client *client = getClientByFd(fd);
-    if (!client)
+    Client *cli = getClientByFd(fd);
+    if (!cli)
         return;
-    std::string nickname = client->getNickname();
+    std::string nickname = cli->getNickname();
     std::vector<std::string> tokens = splitCommand(cmd);
     if (tokens.size() < 3)
     {
@@ -78,7 +78,7 @@ void Server::KICK(const std::string &cmd, int fd)
         }
         // Build KICK message using client prefix
         std::ostringstream oss;
-        oss << ":" << client->getPrefix() << " KICK " << chName << " " << targetNick;
+        oss << ":" << cli->getPrefix() << " KICK " << chName << " " << targetNick;
         if (!reason.empty())
             oss << " :" << reason;
         oss << "\r\n";

@@ -79,7 +79,7 @@ void Server::MODE(const std::string &cmd, int fd)
             std::string limit_str = oss.str();
             params += " " + limit_str;
         }
-        sendResponse(fd, ":localhost 324 " + nickname + " #" + internalChannelName + " " + modes + params + "\r\n");
+        sendResponse(fd, ":ircserv 324 " + nickname + " #" + internalChannelName + " " + modes + params + "\r\n");
         return;
     }
 
@@ -157,7 +157,7 @@ void Server::MODE(const std::string &cmd, int fd)
                         channel->setAsOperator(promote->getNickname());
                         channel->setAsMember(targetNick);
                         // send MODE broadcast
-                        std::string msg = ":localhost " + nickname + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
+                        std::string msg = ": " + cli->getPrefix() + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
                         channel->broadcastMessage(msg);
                     }
                     else if(channel->getOperatorsCount() == 1 && channel->getChannelTotalClientCount() == 1)

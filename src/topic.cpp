@@ -26,11 +26,12 @@ static bool isValidTopic(const std::string &topic)
 
 void Server::TOPIC(const std::string &cmd, int fd)
 {
-    Client *client = getClientByFd(fd);
-    if (!client) return;
+    Client *cli = getClientByFd(fd);
+    if (!cli)
+        return;
 
     std::vector<std::string> tokens = splitCommand(cmd);
-    std::string nickname = client->getNickname();
+    std::string nickname = cli->getNickname();
 
     if (tokens.size() < 2)
     {
@@ -104,7 +105,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
     ch->setTimeTopicCreated();
     // Broadcast topic change
     std::ostringstream oss;
-    oss << ":" << client->getPrefix() << " TOPIC " << channelName << " :";
+    oss << ":" << cli->getPrefix() << " TOPIC " << channelName << " :";
     if (!newTopic.empty())
         oss << newTopic;
     oss << "\r\n";

@@ -119,10 +119,10 @@ void Server::JOIN(const std::string &cmd, int fd)
             ch->broadcastMessage(joinMsg); // broadcast JOIN to other members
             if (!ch->getTopicName().empty())
             {
-                sendResponse(fd, ":localhost 332 " + nickname + " #" + chName + " :" + ch->getTopicName() + "\r\n");
+                sendResponse(fd, ":ircserv 332 " + nickname + " #" + chName + " :" + ch->getTopicName() + "\r\n");
             }
-            sendResponse(fd, ":localhost 353 " + nickname + " = #" + chName + " :" + ch->getNamesList() + "\r\n");
-            sendResponse(fd, ":localhost 366 " + nickname + " #" + chName + " :End of NAMES list\r\n");
+            sendResponse(fd, ":ircserv 353 " + nickname + " = #" + chName + " :" + ch->getNamesList() + "\r\n");
+            sendResponse(fd, ":ircserv 366 " + nickname + " #" + chName + " :End of NAMES list\r\n");
         }
         else // Create new channel
         {
@@ -139,8 +139,8 @@ void Server::JOIN(const std::string &cmd, int fd)
             // Send messages
             std::string joinMsg = ":" + nickname + " JOIN #" + chName + "\r\n";
             newCh->broadcastMessage(joinMsg);
-            sendResponse(fd, ":localhost 353 " + nickname + " = #" + chName + " :" + newCh->getNamesList() + "\r\n");
-            sendResponse(fd, ":localhost 366 " + nickname + " #" + chName + " :End of NAMES list\r\n");
+            sendResponse(fd, ":ircserv 353 " + nickname + " = #" + chName + " :" + newCh->getNamesList() + "\r\n");
+            sendResponse(fd, ":ircserv 366 " + nickname + " #" + chName + " :End of NAMES list\r\n");
         }
     }
 }

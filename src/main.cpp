@@ -5,37 +5,41 @@
 #include <cctype>
 #include <csignal>
 
-bool isValidPort(const char* portStr)
+bool isValidPort(const std::string &portStr)
 {
-    if (!portStr || strlen(portStr) == 0)
+    if (portStr.empty())
         return false;
 
-    for (size_t i = 0; i < strlen(portStr); ++i)
+    unsigned long port = 0;
+    for (std::string::size_type i = 0; i < portStr.size(); ++i)
     {
-        if (!isdigit(portStr[i]))
+        if (!std::isdigit(portStr[i]))
+            return false;
+
+        // Multiply current value by 10 and add digit
+        port = port * 10 + (portStr[i] - '0');
+
+        // Check overflow (max port is 65535)
+        if (port > 65535)
             return false;
     }
 
-    int port = std::atoi(portStr);
-
     // Must be in valid user-space port range
-    if (port < 1024 || port > 65535)
+    if (port < 1024)
         return false;
 
     return true;
 }
 
-bool isValidPassword(const char* pwd)
+bool isValidPassword(const std::string &pwd)
 {
-    if (!pwd || strlen(pwd) == 0)
+    if (pwd.empty())
         return false;
-
-    if (strlen(pwd) > 512) // Max line length in IRC protocol
+    if (pwd.length() > 512) //Max IRC line length
         return false;
-
-    // Check all characters are printable ASCII
-    for (size_t i = 0; i < strlen(pwd); ++i)
+    for (std::string::size_type i = 0; i < pwd.length(); ++i)
     {
+        //Printable ASCII only (32-126)
         if (pwd[i] < 32 || pwd[i] > 126)
             return false;
     }
