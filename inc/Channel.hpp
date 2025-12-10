@@ -18,7 +18,7 @@ class Channel
 		std::string topicName;
 		std::string topicSetter;
 		std::string timeChannelCreated;
-		std::string timeTopicCreated;
+		time_t timeTopicCreated;
 		std::string channelKey;
 		std::vector<Client*> members;
 		std::vector<Client*> operators;
@@ -51,7 +51,7 @@ class Channel
 		const std::string& getTopicName() const;
 		const std::string& getTopicSetter() const;
 		const std::string& getTimeChannelCreated() const;
-		const std::string& getTimeTopicCreated() const;
+		const time_t& getTimeTopicCreated() const;
 		const std::string& getChannelKey() const;
 
 		bool isChannelOperator(const std::string& nickname) const;

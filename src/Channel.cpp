@@ -49,13 +49,7 @@ void Channel::setTimeChannelCreated()
 
 void Channel::setTimeTopicCreated()
 {
-	time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-    std::ostringstream oss;
-    oss << std::setw(4) << std::setfill('0') << (t->tm_year + 1900) << "-"
-        << std::setw(2) << std::setfill('0') << (t->tm_mon + 1) << "-"
-        << std::setw(2) << std::setfill('0') << t->tm_mday;
-	timeTopicCreated = oss.str();
+	timeTopicCreated = time(NULL);
 }
 
 void Channel::setChannelKey(const std::string& key){channelKey =key ;}
@@ -79,7 +73,7 @@ const std::string& Channel::getTopicName() const{return topicName;}
 
 const std::string& Channel::getTimeChannelCreated() const{return timeChannelCreated;}
 
-const std::string& Channel::getTimeTopicCreated() const{return timeTopicCreated;}
+const time_t& Channel::getTimeTopicCreated() const{return timeTopicCreated;}
 
 const std::string& Channel::getChannelKey() const{return channelKey;}
 

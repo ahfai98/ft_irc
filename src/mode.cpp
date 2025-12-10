@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-bool Server::isValidKey(const std::string &key)
+bool Server::isValidChannelKey(const std::string &key)
 {
     if(key.empty())
         return false;
@@ -185,7 +185,7 @@ void Server::MODE(const std::string &cmd, int fd)
                     continue;
                 }
                 std::string key = params[param_index++];
-                if(!isValidKey(key))
+                if(!isValidChannelKey(key))
                 {
                     sendResponse(fd, "472 " + key + " :Invalid channel key\r\n");
                     continue;

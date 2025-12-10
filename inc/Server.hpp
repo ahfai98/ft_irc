@@ -108,7 +108,7 @@ class Server
         bool isValidNickname(const std::string &nickname);
 
         //MODE command
-        bool isValidKey(const std::string &key);
+        bool isValidChannelKey(const std::string &key);
         bool isValidLimit(const std::string &limit);
 
         //JOIN command
