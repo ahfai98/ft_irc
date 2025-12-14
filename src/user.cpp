@@ -53,10 +53,12 @@ void Server::USER(const std::string &cmd, int fd)
         sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Username cannot be empty\r\n");
         return;
     }
+    /*
     if (hostname != "0" || servername != "*")
     {
         sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Invalid parameters, expected 0 and *\r\n");
         return;
     }
+    */
     cli->setUsername(username);
 }

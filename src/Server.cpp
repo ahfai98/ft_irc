@@ -258,6 +258,8 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     for (size_t i = 0; i < command.size(); ++i)
         command[i] = toupper(command[i]);
 
+    if (command == "CAP")
+        return;
     CommandHandler handler = NULL;
     std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);
     if (it != commandMap.end())
@@ -273,7 +275,7 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         if (!cli->getRegistered())
         {
             // Enforce PASS first if server password is set
-            if (!cli->getPasswordAuthenticated() && command != "PASS")
+            if (!password.empty() && !cli->getPasswordAuthenticated() && command != "PASS")
             {
                 sendResponse(fd, "464 :Password required first\r\n");
                 return;
