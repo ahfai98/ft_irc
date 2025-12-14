@@ -81,7 +81,7 @@ void Server::NICK(const std::string &cmd, int fd)
     // 433: ERR_NICKNAMEINUSE
     for (std::vector<std::string>::iterator it = nicknames.begin(); it != nicknames.end(); ++it)
     {
-        if (*it == folded && folded != currentFolded)
+        if (*it == folded && folded != currentFolded && *it != "*")
         {
             sendResponse(fd, "433 * " + newNickname + " :Nickname is already in use");
             return;
@@ -103,14 +103,11 @@ void Server::NICK(const std::string &cmd, int fd)
             break;
         }
     }
-
     // Add new folded nickname
     nicknames.push_back(folded);
     cli->setNickname(newNickname);
     clientsByNickname[newNickname] = cli;
-
     std::string oldMask = oldNickname == "*" ? "*" : oldNickname + "!" + cli->getUsername() + "@localhost";
-
     // Broadcast NICK change to channels
     if (cli->getRegistered())
     {

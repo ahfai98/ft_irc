@@ -45,13 +45,10 @@ void Server::JOIN(const std::string &cmd, int fd)
     if (tokens.size() == 2 && tokens[1] == "0")
     {
         std::vector<std::string> joinedChannels = cli->getJoinedChannels();
-        std::string joinedChannelsStr = "";
-        for (size_t i = 0; i < joinedChannels.size(); ++i)
-            joinedChannelsStr += ",#" + joinedChannels[i];
-        if (joinedChannelsStr.empty())
+        if (joinedChannels.empty())
             return;
-        joinedChannelsStr.erase(joinedChannelsStr.begin());
-        PART("PART "+ joinedChannelsStr, fd);
+        for (size_t i = 0; i < joinedChannels.size(); ++i)
+            PART("PART #" + joinedChannels[i], fd);
         return;
     }
     if (tokens.size() < 2)

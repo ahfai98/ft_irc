@@ -197,26 +197,27 @@ void Server::receiveClientData(int fd)
     // Reference updated buffer safely
     std::string& buf = cli->getBuffer();
     size_t pos;
-
-    // Extract and execute complete commands ending with \r\n
-    while ((pos = buf.find("\r\n")) != std::string::npos)
+    while (true)
     {
+        pos = buf.find("\r\n");
+        bool hasCRLF = true;
+        if (pos == std::string::npos)
+        {
+            pos = buf.find("\n");
+            hasCRLF = false;
+        }
+        if (pos == std::string::npos)
+            break; // No complete command
+
         Client* checkCli = getClientByFd(fd);
         if (!checkCli)
-            return; // Client might have been removed by a command (like QUIT)
-
-        std::string command = buf.substr(0, pos);
-
-        // Execute the command
+            return;
+        std::string command = buf.substr(0, (hasCRLF && pos > 0 && buf[pos-1] == '\r') ? pos-1 : pos);
         parseExecuteCommand(command, fd);
-
-        // Stop immediately if client was removed during command execution
         checkCli = getClientByFd(fd);
         if (!checkCli)
             return;
-
-        // Remove processed command + \r\n from buffer
-        buf.erase(0, pos + 2);
+        buf.erase(0, hasCRLF ? pos+2 : pos+1); // remove processed line + newline(s)
     }
 }
 
@@ -274,12 +275,13 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         // If client is not registered
         if (!cli->getRegistered())
         {
-            // Enforce PASS first if server password is set
+            /* Enforce PASS first if server password is set
             if (!password.empty() && !cli->getPasswordAuthenticated() && command != "PASS")
             {
                 sendResponse(fd, "464 :Password required first\r\n");
                 return;
             }
+            */
             // Only allow PASS/NICK/USER before registration
             if (command == "PASS" || command == "NICK" || command == "USER")
             {
