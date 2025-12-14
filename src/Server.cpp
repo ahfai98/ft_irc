@@ -339,28 +339,30 @@ void Server::addClient(Client* cli)
 void Server::removeClient(int fd)
 {
     Client* c = getClientByFd(fd);
-    if (!c) return;
-
+    if (!c)
+        return;
+    std::vector<std::string>::iterator it;
+    for (it = nicknames.begin(); it != nicknames.end(); ++it)
+    {
+        if (*it == c->getNickname())
+        {
+            nicknames.erase(it);
+            break;
+        }
+    }
     // Remove pollfd first to prevent poll events
     removePollfd(fd);
-
     // Remove client from all channels safely
     removeClientFromAllChannels(c);
-
     // Erase nickname before deletion to avoid dangling map
     clientsByNickname.erase(c->getNickname());
     clientsByFd.erase(fd);
-
     // Close socket and delete client object
     close(fd);
     delete c;
-
     // Cleanup channels with zero clients
     cleanupEmptyChannels();
 }
-
-
-
 
 void Server::removeClientFromAllChannels(Client *cli)
 {
@@ -466,13 +468,11 @@ void Server::cleanupEmptyChannels()
 {
     std::vector<std::string> toErase;
 
-    for (std::map<std::string, Channel*>::iterator it = channels.begin();
-         it != channels.end(); ++it)
+    for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
     {
         if (it->second && it->second->getChannelTotalClientCount() == 0)
             toErase.push_back(it->first);
     }
-
     for (size_t i = 0; i < toErase.size(); ++i)
     {
         Channel* ch = channels[toErase[i]];

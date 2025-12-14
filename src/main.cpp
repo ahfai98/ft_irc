@@ -15,7 +15,6 @@ bool isValidPort(const std::string &portStr)
     {
         if (!std::isdigit(portStr[i]))
             return false;
-
         // Multiply current value by 10 and add digit
         port = port * 10 + (portStr[i] - '0');
 
@@ -23,11 +22,9 @@ bool isValidPort(const std::string &portStr)
         if (port > 65535)
             return false;
     }
-
     // Must be in valid user-space port range
     if (port < 1024)
         return false;
-
     return true;
 }
 

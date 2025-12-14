@@ -9,14 +9,24 @@ void Server::PART(const std::string &cmd, int fd)
     std::string nickname = cli->getNickname();
     if (tokens.size() < 2)
     {
-        sendResponse(fd, "461 " + nickname + " PART :Not enough parameters\r\n");
+        sendResponse(fd, ":ircserv 461 " + nickname + " PART :Not enough parameters\r\n");
         return;
     }
     std::vector<std::string> channels = splitString(tokens[1], ',');
     std::string partMessage = nickname + " has left the channel";
     if (tokens.size() > 2)
     {
-        partMessage = tokens[2];
+        if (tokens[2][0] != ':')
+            partMessage = tokens[2];
+        else
+        {
+            for (size_t i = 2; i < tokens.size(); ++i)
+            {
+                if (i > 2)
+                    partMessage += " ";
+                partMessage += tokens[i];
+            }
+        }
         if (!partMessage.empty() && partMessage[0] == ':')
             partMessage = partMessage.substr(1);
     }
@@ -25,19 +35,19 @@ void Server::PART(const std::string &cmd, int fd)
         std::string chName = channels[i];
         if (!isValidChannelName(chName))
         {
-            sendResponse(fd, "403 " + nickname + " " + chName + " :No such channel\r\n");
+            sendResponse(fd, ":ircserv 403 " + nickname + " " + chName + " :No such channel\r\n");
             continue;
         }
         std::string internalChannelName = chName.substr(1);
         Channel *ch = getChannel(internalChannelName);
         if (!ch)
         {
-            sendResponse(fd, "403 " + nickname + " " + chName + " :No such channel\r\n");
+            sendResponse(fd, ":ircserv 403 " + nickname + " " + chName + " :No such channel\r\n");
             continue;
         }
         if (!ch->isInChannel(nickname))
         {
-            sendResponse(fd, "442 " + nickname + " " + chName + " :You're not on that channel\r\n");
+            sendResponse(fd, ":ircserv 442 " + nickname + " " + chName + " :You're not on that channel\r\n");
             continue;
         }
         std::ostringstream oss;
@@ -46,13 +56,5 @@ void Server::PART(const std::string &cmd, int fd)
         ch->removeOperatorByFd(fd);
         ch->removeMemberByFd(fd);
         cleanupEmptyChannels();
-        if (ch->getOperatorsCount() == 0 && ch->getChannelTotalClientCount() > 0)
-        {
-            Client* promote = ch->getFirstMember();
-            ch->setAsOperator(promote->getNickname());
-            // send MODE broadcast
-            std::string msg = ": " + cli->getPrefix() + " MODE #" + internalChannelName + " +o " + promote->getNickname() + "\r\n";
-            ch->broadcastMessage(msg);
-        }
     }
 }

@@ -9,28 +9,37 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
     std::string nickname = cli->getNickname();
     if (tokens.size() < 2)
     {
-        sendResponse(fd, "411 " + nickname + " :No recipient given\r\n");
+        sendResponse(fd, ":ircserv 411 " + nickname + " :No recipient given\r\n");
         return;
     }
     if (tokens.size() < 3)
     {
-        sendResponse(fd, "412 " + nickname + " :No text to send\r\n");
+        sendResponse(fd, ":ircserv 412 " + nickname + " :No text to send\r\n");
         return;
     }
     // Extract targets and message
-    std::string targetStr = tokens[1];  // comma-separated targets
-    std::string message = tokens[2];    // trailing parameter
-
+    std::string targetStr = tokens[1];
+    std::string message;
+    if (tokens[2][0] != ':')
+        message = tokens[2];
+    else
+    {
+        for (size_t i = 2; i < tokens.size(); ++i)
+        {
+            if (i > 2)
+                message += " ";
+            message += tokens[i];
+        }
+    }
     if (!message.empty() && message[0] == ':')
         message = message.substr(1);
     message = trim(message);
-    if (message.empty()) {
-        sendResponse(fd, "412 " + nickname + " :No text to send\r\n");
+    if (message.empty())
+    {
+        sendResponse(fd, ":ircserv 412 " + nickname + " :No text to send\r\n");
         return;
     }
-    // Split targets
     std::vector<std::string> targets = splitString(targetStr, ',');
-    // Remove empty targets
     for (size_t i = 0; i < targets.size(); ++i)
     {
         if (targets[i].empty())
@@ -39,10 +48,9 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
             --i;
         }
     }
-    // Too many targets
     if (targets.size() > 10)
     {
-        sendResponse(fd, "407 " + nickname + " :Too many recipients\r\n");
+        sendResponse(fd, ":ircserv 407 " + nickname + " :Too many recipients\r\n");
         return;
     }
     for (size_t i = 0; i < targets.size(); ++i)
@@ -57,24 +65,24 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
             Channel *ch = getChannel(chName);
             if (!ch)
             {
-                sendResponse(fd, "403 " + nickname + " " + target + " :No such channel\r\n");
+                sendResponse(fd, ":ircserv 403 " + nickname + " " + target + " :No such channel\r\n");
                 continue;
             }
             if (!ch->isInChannel(nickname))
             {
-                sendResponse(fd, "404 " + nickname + " " + target + " :Cannot send to channel\r\n");
+                sendResponse(fd, ":ircserv 404 " + nickname + " " + target + " :Cannot send to channel\r\n");
                 continue;
             }
             std::ostringstream oss;
             oss << ":" << cli->getPrefix() << " PRIVMSG " << target << " :" << message << "\r\n";
-            ch->broadcastMessageExcept(oss.str(), fd); // exclude sender
+            ch->broadcastMessageExcept(oss.str(), fd);
         }
         else
         { // User
             Client *targetClient = getClientByNickname(target);
             if (!targetClient)
             {
-                sendResponse(fd, "401 " + nickname + " " + target + " :No such nick\r\n");
+                sendResponse(fd, ":ircserv 401 " + nickname + " " + target + " :No such nick\r\n");
                 continue;
             }
             std::ostringstream oss;

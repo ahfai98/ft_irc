@@ -36,22 +36,22 @@ void Server::TOPIC(const std::string &cmd, int fd)
         sendResponse(fd, ":ircserv 461 " + nickname + " TOPIC :Not enough parameters\r\n");
         return;
     }
-    std::string channelName = tokens[1];
-    if (!isValidChannelName(channelName))
+    std::string chName = tokens[1];
+    if (!isValidChannelName(chName))
     {
-        sendResponse(fd, ":ircserv  403 " + nickname + " " + channelName + " :No such channel\r\n");
+        sendResponse(fd, ":ircserv  403 " + nickname + " " + chName + " :No such channel\r\n");
         return;
     }
-    std::string internalChannelName = channelName.substr(1);
+    std::string internalChannelName = chName.substr(1);
     Channel *ch = getChannel(internalChannelName);
     if (!ch)
     {
-        sendResponse(fd, ":ircserv 403 " + nickname + " " + channelName + " :No such channel\r\n");
+        sendResponse(fd, ":ircserv 403 " + nickname + " " + chName + " :No such channel\r\n");
         return;
     }
     if (!ch->isInChannel(nickname))
     {
-        sendResponse(fd, ":ircserv 442 " + nickname + " " + channelName + " :You're not on that channel\r\n");
+        sendResponse(fd, ":ircserv 442 " + nickname + " " + chName + " :You're not on that channel\r\n");
         return;
     }
     // QUERY
@@ -59,12 +59,12 @@ void Server::TOPIC(const std::string &cmd, int fd)
     {
         std::string currentTopic = ch->getTopicName();
         if (currentTopic.empty())
-            sendResponse(fd, ":ircserv 331 " + nickname + " " + channelName + " :No topic is set\r\n");
+            sendResponse(fd, ":ircserv 331 " + nickname + " " + chName + " :No topic is set\r\n");
         else
         {
-            sendResponse(fd, ":ircserv 332 " + nickname + " " + channelName + " :" + currentTopic + "\r\n");
+            sendResponse(fd, ":ircserv 332 " + nickname + " " + chName + " :" + currentTopic + "\r\n");
             std::ostringstream oss;
-            oss << ":ircserv 333 " << nickname << " " << channelName << " :" << ch->getTopicSetter() << " " << ch->getTimeTopicCreated() << "\r\n";
+            oss << ":ircserv 333 " << nickname << " " << chName << " :" << ch->getTopicSetter() << " " << ch->getTimeTopicCreated() << "\r\n";
             sendResponse(fd, oss.str());
         }
         return;
@@ -100,7 +100,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
     // Check operator privileges if topic is protected
     if (ch->getTopicMode() && !ch->isChannelOperator(nickname))
     {
-        sendResponse(fd, ":ircserv 482 " + nickname + " " + channelName + " :You're not channel operator\r\n");
+        sendResponse(fd, ":ircserv 482 " + nickname + " " + chName + " :You're not channel operator\r\n");
         return;
     }
     ch->setTopicName(newTopic);
@@ -108,7 +108,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
     ch->setTimeTopicCreated();
     // Broadcast topic change
     std::ostringstream oss;
-    oss << ":" << cli->getPrefix() << " TOPIC " << channelName << " :";
+    oss << ":" << cli->getPrefix() << " TOPIC " << chName << " :";
     if (!newTopic.empty())
         oss << newTopic;
     oss << "\r\n";

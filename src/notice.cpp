@@ -6,17 +6,26 @@ void Server::NOTICE(const std::string &cmd, int fd)
     if (!cli)
         return;
     std::vector<std::string> tokens = splitCommand(cmd);
-    if (tokens.size() < 2)
-        return; // No target, silently ignore
+    if (tokens.size() < 3)
+        return;
     std::string targetStr = tokens[1];
-    std::string message = tokens[2];
+    std::string message;
+    if (tokens[2][0] != ':')
+        message = tokens[2];
+    else
+    {
+        for (size_t i = 2; i < tokens.size(); ++i)
+        {
+            if (i > 2)
+                message += " ";
+            message += tokens[i];
+        }
+    }
     if (!message.empty() && message[0] == ':')
         message = message.substr(1);
-    // Trim leading/trailing spaces
     message = trim(message);
     if (message.empty())
         return;
-    // Split targets by comma
     std::vector<std::string> targets = splitString(targetStr, ',');
     for (size_t i = 0; i < targets.size(); ++i)
     {

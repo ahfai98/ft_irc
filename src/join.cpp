@@ -90,9 +90,7 @@ void Server::JOIN(const std::string &cmd, int fd)
             sendResponse(fd, ":ircserv 405 " + nickname + " JOIN :You have joined too many channels\r\n");
             continue;
         }
-        std::string internalChannelName = chName;
-        if (internalChannelName[0] == '#')
-            internalChannelName.erase(internalChannelName.begin());
+        std::string internalChannelName = chName.substr(1);
         Channel *ch = getChannel(internalChannelName);
         if (ch) // Existing channel
         {
