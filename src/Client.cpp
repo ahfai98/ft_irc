@@ -7,6 +7,7 @@ Client::Client(int fd)
 	username(""),
 	nickname("*"),
 	receiveBuffer(""),
+	sendBuffer(""),
 	ipAddress("")
 {
 }
@@ -25,7 +26,9 @@ std::string Client::getUsername() const {return username;}
 
 std::string Client::getNickname() const{return nickname;}
 
-std::string& Client::getBuffer() {return receiveBuffer;}
+std::string& Client::getReceiveBuffer() {return receiveBuffer;}
+
+std::string& Client::getSendBuffer() {return sendBuffer;}
 
 const std::vector<std::string>& Client::getJoinedChannels() const {return joinedChannels;}
 
@@ -39,11 +42,15 @@ void Client::setUsername(const std::string& username){this->username = username;
 
 void Client::setNickname(const std::string& nickname){this->nickname = nickname;}
 
-void Client::setBuffer(const std::string& buf){receiveBuffer = buf;}
+void Client::setReceiveBuffer(const std::string& buf){receiveBuffer = buf;}
+
+void Client::setSendBuffer(const std::string& buf){sendBuffer = buf;}
 
 void Client::setIpAddress(const std::string& ipAddress){this->ipAddress = ipAddress;}
 
-void Client::clearBuffer(){receiveBuffer.clear();}
+void Client::clearReceiveBuffer(){receiveBuffer.clear();}
+
+void Client::clearSendBuffer(){sendBuffer.clear();}
 
 bool Client::isInChannel(const std::string& name) const
 {
@@ -54,6 +61,28 @@ bool Client::isInChannel(const std::string& name) const
 			return true;
 	}
 	return false;
+}
+
+void Client::addJoinedChannels(const std::string& name)
+{
+	for (int i = joinedChannels.size() - 1; i >= 0; --i)
+    {
+        if (joinedChannels[i] == name)
+			return;
+    }
+	joinedChannels.push_back(name);
+}
+
+void Client::removeJoinedChannels(const std::string& name)
+{
+    for (int i = joinedChannels.size() - 1; i >= 0; --i)
+    {
+        if (joinedChannels[i] == name)
+		{
+            joinedChannels.erase(joinedChannels.begin() + i);
+			break;
+		}
+    }
 }
 
 std::string Client::getPrefix() const

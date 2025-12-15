@@ -88,6 +88,7 @@ void Server::KICK(const std::string &cmd, int fd)
         std::ostringstream oss;
         oss << ":" << cli->getPrefix() << " KICK " << chName << " " << targetNick << " :" << reason << "\r\n";
         ch->broadcastMessage(oss.str());
+        target->removeJoinedChannels(internalChannelName);
         // Remove target from channel
         if (ch->isChannelMember(targetNick))
             ch->removeMemberByFd(target->getSocketFd());

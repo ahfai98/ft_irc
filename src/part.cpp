@@ -52,6 +52,7 @@ void Server::PART(const std::string &cmd, int fd)
         }
         std::ostringstream oss;
         oss << ":" << cli->getPrefix() << " PART " << chName << " :" << partMessage << "\r\n";
+        cli->removeJoinedChannels(internalChannelName);
         ch->broadcastMessage(oss.str());
         ch->removeOperatorByFd(fd);
         ch->removeMemberByFd(fd);

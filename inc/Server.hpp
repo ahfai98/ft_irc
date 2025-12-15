@@ -68,6 +68,7 @@ class Server
         void serverInit(int port,const std::string& password);
         void acceptClient();
         void receiveClientData(int fd);
+        void handleClientWrite(int fd);
         void fatalError(const char* msg);
 
         Client *getClientByFd(int fd);

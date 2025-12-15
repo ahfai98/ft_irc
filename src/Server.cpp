@@ -123,7 +123,7 @@ void Server::serverInit(int port, const std::string &password)
 			throw std::runtime_error("poll failed");
 		}
 
-		for (size_t i = 0; i < pollfds.size(); ++i)
+		for (ssize_t i = pollfds.size() - 1; i >= 0; --i)
 		{
 			if (pollfds[i].revents & POLLIN)
 			{
@@ -131,10 +131,11 @@ void Server::serverInit(int port, const std::string &password)
 					acceptClient();
 				else
 					receiveClientData(pollfds[i].fd);
+            }
+            if (pollfds[i].revents & POLLOUT)
+                handleClientWrite(pollfds[i].fd);
 
-				// Reset flags for next poll
-				pollfds[i].revents = 0;
-			}
+            pollfds[i].revents = 0;
 		}
 	}
 	std::cout << "Closing Server..." << std::endl;
@@ -191,11 +192,11 @@ void Server::receiveClientData(int fd)
     }
 
     // Append new data to client's buffer
-    std::string currentBuffer = cli->getBuffer() + std::string(buff, bytes);
-    cli->setBuffer(currentBuffer);
+    std::string currentBuffer = cli->getReceiveBuffer() + std::string(buff, bytes);
+    cli->setReceiveBuffer(currentBuffer);
 
     // Reference updated buffer safely
-    std::string& buf = cli->getBuffer();
+    std::string& buf = cli->getReceiveBuffer();
     size_t pos;
     while (true)
     {
@@ -254,6 +255,11 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     if (tokens.empty())
         return;
 
+    std::cout << "Command Tokens are " << std::endl;
+    for (size_t i = 0; i < tokens.size(); ++i)
+    {
+        std::cout << tokens[i] << std::endl;
+    }
     // Case-insensitive command
     std::string command = tokens[0];
     for (size_t i = 0; i < command.size(); ++i)
@@ -264,8 +270,10 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     CommandHandler handler = NULL;
     std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);
     if (it != commandMap.end())
+    {
+        std::cout << "Handler found for " + it->first << std::endl;
         handler = it->second;
-
+    }
     Client* cli = getClientByFd(fd);
     if (!cli)
         return;
@@ -297,7 +305,7 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
                 }
             }
             else
-                sendResponse(fd, "451 :You have not registered\r\n");
+                sendResponse(fd, ":ircserv 451 :You have not registered\r\n");
         }
         else
         {
@@ -305,7 +313,7 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         }
     }
     else
-        sendResponse(fd, "ERR_CMDNOTFOUND");
+        sendResponse(fd, ":ircserv 421 " + cli->getNickname() + " " + command + " :Unknown command");
 }
 
 Client* Server::getClientByFd(int fd)
@@ -448,12 +456,53 @@ void Server::removePollfd(int fd)
 
 void Server::sendResponse(int fd, const std::string &message)
 {
-    std::string msgWithCRLF = message;
-    if (msgWithCRLF.size() < 2 || msgWithCRLF.substr(msgWithCRLF.size()-2) != "\r\n")
-        msgWithCRLF += "\r\n";
+    Client* cli = getClientByFd(fd);
+    if (!cli)
+        return;
 
-    if (send(fd, msgWithCRLF.c_str(), msgWithCRLF.size(), 0) == -1)
-        std::cerr << "Failed to send to fd " << fd << std::endl;
+    std::string msg = message;
+    if (msg.size() < 2 || msg.substr(msg.size() - 2) != "\r\n")
+        msg += "\r\n";
+
+    cli->getSendBuffer() += msg;
+
+    // Enable POLLOUT
+    for (size_t i = 0; i < pollfds.size(); ++i)
+    {
+        if (pollfds[i].fd == fd)
+        {
+            pollfds[i].events |= POLLOUT;
+            break;
+        }
+    }
+}
+
+void Server::handleClientWrite(int fd)
+{
+    Client* cli = getClientByFd(fd);
+    if (!cli)
+        return;
+
+    std::string& buffer = cli->getSendBuffer();
+    if (buffer.empty())
+        return;
+
+    ssize_t sent = send(fd, buffer.c_str(), buffer.size(), 0);
+
+    if (sent > 0)
+        buffer.erase(0, sent);
+    // Stop watching POLLOUT if nothing left to send
+    if (buffer.empty())
+    {
+        for (size_t i = 0; i < pollfds.size(); ++i)
+        {
+            if (pollfds[i].fd == fd)
+            {
+                pollfds[i].events &= ~POLLOUT;
+                break;
+            }
+        }
+    }
 }
 
 void Server::sendWelcome(Client *cli)

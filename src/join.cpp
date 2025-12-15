@@ -47,8 +47,14 @@ void Server::JOIN(const std::string &cmd, int fd)
         std::vector<std::string> joinedChannels = cli->getJoinedChannels();
         if (joinedChannels.empty())
             return;
-        for (size_t i = 0; i < joinedChannels.size(); ++i)
+        std::string partMessage = nickname + " has left the channel";
+        for (size_t i = 0; i != joinedChannels.size(); ++i)
+        {
+            Channel *ch = getChannel(joinedChannels[i]);
+            if (!ch)
+                continue;
             PART("PART #" + joinedChannels[i], fd);
+        }
         return;
     }
     if (tokens.size() < 2)
@@ -110,6 +116,7 @@ void Server::JOIN(const std::string &cmd, int fd)
             }
             // Add client
             ch->addMember(cli);
+            cli->addJoinedChannels(internalChannelName);
             if (ch->isInvited(nickname))
                 ch->removeInvited(nickname);
             // Send JOIN, NAMES, TOPIC messages
@@ -137,6 +144,7 @@ void Server::JOIN(const std::string &cmd, int fd)
             newCh->addOperator(cli);
             newCh->setTimeChannelCreated();
             addChannel(newCh);
+            cli->addJoinedChannels(internalChannelName);
             // Send messages
             std::string joinMsg = ":" + cli->getPrefix() + " JOIN " + chName + "\r\n";
             newCh->broadcastMessage(joinMsg);

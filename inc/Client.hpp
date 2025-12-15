@@ -13,6 +13,7 @@ class Client
 		std::string username;
 		std::string nickname;
 		std::string receiveBuffer;
+		std::string sendBuffer;
 		std::string ipAddress;
 		std::vector<std::string> joinedChannels;
 		//prevent copying
@@ -27,7 +28,8 @@ class Client
 		bool getRegistered() const;
 		std::string getUsername() const;
 		std::string getNickname() const;
-		std::string& getBuffer() ;
+		std::string& getReceiveBuffer();
+		std::string& getSendBuffer() ;
 		const std::vector<std::string>& getJoinedChannels() const;
 		std::string getPrefix() const;
 		//Setters
@@ -36,12 +38,16 @@ class Client
 		void setRegistered(bool value);
 		void setUsername(const std::string& username);
 		void setNickname(const std::string& nickname);
-		void setBuffer(const std::string& buf);
+		void setReceiveBuffer(const std::string& buf);
+		void setSendBuffer(const std::string& buf);
 		void setIpAddress(const std::string& ipAddress);
 		//Utility Methods
-		void clearBuffer();
+		void clearReceiveBuffer();
+		void clearSendBuffer();
 		void addChannelInvites(const std::string& name);
 		bool isInChannel(const std::string& name) const;
+		void addJoinedChannels(const std::string& name);
+		void removeJoinedChannels(const std::string& name);
 };
 
 #endif
