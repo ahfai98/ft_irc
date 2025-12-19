@@ -43,7 +43,6 @@ class Server
         struct sockaddr_in address;
         std::map<int, Client*> clientsByFd;
         std::map<std::string, Client*> clientsByNickname;
-        std::vector<std::string> nicknames;
         std::map<std::string, Channel*> channels;
         std::map<std::string, CommandHandler> commandMap;
         Server(Server const &src);
@@ -102,6 +101,7 @@ class Server
         void INVITE(const std::string &cmd, int fd);
         void PING(const std::string &cmd, int fd);
         void NOTICE(const std::string &cmd, int fd);
+        void WHOIS(const std::string &cmd, int fd);
         
         void sendWelcome(Client *cli);
 
@@ -121,6 +121,8 @@ class Server
 
         //PART and QUIT command
         void cleanupEmptyChannels();
+
+        void printChannelsState();
 };
 
 #endif

@@ -271,6 +271,6 @@ void Server::MODE(const std::string &cmd, int fd)
         for (size_t i = 0; i < outParams.size(); ++i)
             msg += " " + outParams[i];
         msg += "\r\n";
-        ch->broadcastMessage(msg);
+        ch->broadcastMessage(*this, msg);
     }
 }

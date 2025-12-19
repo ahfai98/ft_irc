@@ -4,7 +4,9 @@ Client::Client(int fd)
 :   socketFd(fd),
 	isPasswordAuthenticated(false),
 	isRegistered(false),
+	isQuitting(false),
 	username(""),
+	realname(""),
 	nickname("*"),
 	receiveBuffer(""),
 	sendBuffer(""),
@@ -22,7 +24,11 @@ bool Client::getPasswordAuthenticated() const {return isPasswordAuthenticated;}
 
 bool Client::getRegistered() const {return isRegistered;}
 
+bool Client::getQuitting() const {return isQuitting;}
+
 std::string Client::getUsername() const {return username;}
+
+std::string Client::getRealname() const {return realname;}
 
 std::string Client::getNickname() const{return nickname;}
 
@@ -38,7 +44,11 @@ void Client::setPasswordAuthenticated(bool value){isPasswordAuthenticated = valu
 
 void Client::setRegistered(bool value){isRegistered = value;}
 
+void Client::setQuitting(bool value){isQuitting = value;}
+
 void Client::setUsername(const std::string& username){this->username = username;}
+
+void Client::setRealname(const std::string& realname){this->realname = realname;}
 
 void Client::setNickname(const std::string& nickname){this->nickname = nickname;}
 
@@ -89,3 +99,5 @@ std::string Client::getPrefix() const
 {
     return getNickname() + "!" + getUsername() + "@" + "localhost";
 }
+
+std::string Client::getIpAddress() const{return ipAddress;}

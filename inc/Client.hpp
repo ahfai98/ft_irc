@@ -10,7 +10,9 @@ class Client
 		int socketFd;
 		bool isPasswordAuthenticated;
 		bool isRegistered;
+		bool isQuitting;
 		std::string username;
+		std::string realname;
 		std::string nickname;
 		std::string receiveBuffer;
 		std::string sendBuffer;
@@ -26,17 +28,22 @@ class Client
 		int getSocketFd() const;
 		bool getPasswordAuthenticated() const;
 		bool getRegistered() const;
+		bool getQuitting() const;
 		std::string getUsername() const;
+		std::string getRealname() const;
 		std::string getNickname() const;
 		std::string& getReceiveBuffer();
 		std::string& getSendBuffer() ;
 		const std::vector<std::string>& getJoinedChannels() const;
 		std::string getPrefix() const;
+		std::string getIpAddress() const;
 		//Setters
 		void setSocketFd(int fd);
 		void setPasswordAuthenticated(bool value);
 		void setRegistered(bool value);
+		void setQuitting(bool value);
 		void setUsername(const std::string& username);
+		void setRealname(const std::string& realname);
 		void setNickname(const std::string& nickname);
 		void setReceiveBuffer(const std::string& buf);
 		void setSendBuffer(const std::string& buf);

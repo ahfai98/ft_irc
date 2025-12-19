@@ -17,6 +17,7 @@ void Server::initCommandMap()
     commandMap["INVITE"] = &Server::INVITE;
     commandMap["PING"]   = &Server::PING;
     commandMap["NOTICE"]= &Server::NOTICE;
+    commandMap["WHOIS"]= &Server::WHOIS;
 }
 
 Server::Server()
@@ -255,11 +256,9 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     if (tokens.empty())
         return;
 
-    std::cout << "Command Tokens are " << std::endl;
+    //Debug
     for (size_t i = 0; i < tokens.size(); ++i)
-    {
         std::cout << tokens[i] << std::endl;
-    }
     // Case-insensitive command
     std::string command = tokens[0];
     for (size_t i = 0; i < command.size(); ++i)
@@ -271,9 +270,11 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
     std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);
     if (it != commandMap.end())
     {
-        std::cout << "Handler found for " + it->first << std::endl;
         handler = it->second;
+        std::cout << " Handler found :" << it->first << std::endl;
     }
+    else
+        std::cout << " Handler not found :" << command << std::endl;
     Client* cli = getClientByFd(fd);
     if (!cli)
         return;
@@ -283,13 +284,12 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         // If client is not registered
         if (!cli->getRegistered())
         {
-            /* Enforce PASS first if server password is set
+            //Enforce PASS first if server password is set
             if (!password.empty() && !cli->getPasswordAuthenticated() && command != "PASS")
             {
-                sendResponse(fd, "464 :Password required first\r\n");
+                sendResponse(fd, ":ircserv 464 * :Password required first\r\n");
                 return;
             }
-            */
             // Only allow PASS/NICK/USER before registration
             if (command == "PASS" || command == "NICK" || command == "USER")
             {
@@ -303,17 +303,19 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
                     cli->setRegistered(true);
                     sendWelcome(cli);
                 }
+                printChannelsState();
             }
             else
-                sendResponse(fd, ":ircserv 451 :You have not registered\r\n");
+                sendResponse(fd, ":ircserv 451 * :You have not registered\r\n");
         }
         else
         {
             (this->*handler)(cmd, fd);
+            printChannelsState();
         }
     }
     else
-        sendResponse(fd, ":ircserv 421 " + cli->getNickname() + " " + command + " :Unknown command");
+        sendResponse(fd, ":ircserv " + cli->getNickname() + " " + command + " :Unknown command\r\n");
 }
 
 Client* Server::getClientByFd(int fd)
@@ -353,15 +355,6 @@ void Server::removeClient(int fd)
     Client* c = getClientByFd(fd);
     if (!c)
         return;
-    std::vector<std::string>::iterator it;
-    for (it = nicknames.begin(); it != nicknames.end(); ++it)
-    {
-        if (*it == c->getNickname())
-        {
-            nicknames.erase(it);
-            break;
-        }
-    }
     // Remove pollfd first to prevent poll events
     removePollfd(fd);
     // Remove client from all channels safely
@@ -502,6 +495,11 @@ void Server::handleClientWrite(int fd)
                 break;
             }
         }
+        if (cli->getQuitting())
+        {
+            shutdown(fd, SHUT_RDWR);
+            removeClient(fd);
+        }
     }
 }
 
@@ -509,7 +507,6 @@ void Server::sendWelcome(Client *cli)
 {
     int fd = cli->getSocketFd();
     std::string nick = cli->getNickname();
-    std::string user = cli->getUsername();
 
     sendResponse(fd, ":ircserv 001 " + nick + " :Welcome to the IRC Network, " + nick + "\r\n");
     sendResponse(fd, ":ircserv 002 " + nick + " :Your host is ircserv, running ft_irc" + "\r\n");
@@ -532,4 +529,21 @@ void Server::cleanupEmptyChannels()
         delete ch;
         channels.erase(toErase[i]);
     }
+}
+
+void Server::printChannelsState()
+{
+    std::cout << "----- Channels State -----" << std::endl;
+    if (channels.empty())
+    {
+        std::cout << "(no channels)" << std::endl;
+        return ;
+    }
+    for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    {
+        Channel* ch = it->second;
+        std::cout << "#" << ch->getChannelName() << std::endl;
+        std::cout << ch->getNamesList() << std::endl;
+    }
+    std::cout << "--------------------------" << std::endl;
 }

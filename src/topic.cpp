@@ -112,5 +112,5 @@ void Server::TOPIC(const std::string &cmd, int fd)
     if (!newTopic.empty())
         oss << newTopic;
     oss << "\r\n";
-    ch->broadcastMessage(oss.str());
+    ch->broadcastMessage(*this, oss.str());
 }

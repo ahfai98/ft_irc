@@ -121,7 +121,7 @@ void Server::JOIN(const std::string &cmd, int fd)
                 ch->removeInvited(nickname);
             // Send JOIN, NAMES, TOPIC messages
             std::string joinMsg = ":" + cli->getPrefix() + " JOIN " + chName + "\r\n";
-            ch->broadcastMessage(joinMsg); // broadcast JOIN to other members
+            ch->broadcastMessage(*this, joinMsg); // broadcast JOIN to other members
             if (!ch->getTopicName().empty())
             {
                 sendResponse(fd, ":ircserv 332 " + nickname + " " + chName + " :" + ch->getTopicName() + "\r\n");
@@ -147,7 +147,7 @@ void Server::JOIN(const std::string &cmd, int fd)
             cli->addJoinedChannels(internalChannelName);
             // Send messages
             std::string joinMsg = ":" + cli->getPrefix() + " JOIN " + chName + "\r\n";
-            newCh->broadcastMessage(joinMsg);
+            newCh->broadcastMessage(*this, joinMsg);
             sendResponse(fd, ":ircserv 353 " + nickname + " = " + chName + " :" + newCh->getNamesList() + "\r\n");
             sendResponse(fd, ":ircserv 366 " + nickname + " " + chName + " :End of NAMES list\r\n");
         }

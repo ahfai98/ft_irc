@@ -42,7 +42,7 @@ void Server::NOTICE(const std::string &cmd, int fd)
                 continue;
             std::ostringstream oss;
             oss << ":" << cli->getPrefix() << " NOTICE " << target << " :" << message << "\r\n";
-            ch->broadcastMessageExcept(oss.str(), fd);
+            ch->broadcastMessageExcept(*this, oss.str(), fd);
         }
         else
         { // User

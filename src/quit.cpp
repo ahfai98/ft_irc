@@ -23,17 +23,9 @@ void Server::QUIT(const std::string& cmd, int fd)
     for (size_t i = 0; i < clientChannels.size(); ++i)
     {
         std::string msg = ":" + prefix + " QUIT :" + quitMessage + "\r\n";
-        clientChannels[i]->broadcastMessageExcept(msg, fd);
+        clientChannels[i]->broadcastMessageExcept(*this, msg, fd);
     }
     std::string finalMsg = "ERROR :Closing Link: " + quitMessage + "\r\n";
-    size_t totalSent = 0;
-    while (totalSent < finalMsg.size())
-    {
-        ssize_t sent = send(fd, finalMsg.c_str() + totalSent, finalMsg.size() - totalSent, 0);
-        if (sent <= 0)
-            break; // client disconnected
-        totalSent += sent;
-    }
-    shutdown(fd, SHUT_RDWR);
-    removeClient(fd);
+    sendResponse(fd, finalMsg);
+    client->setQuitting(true);
 }

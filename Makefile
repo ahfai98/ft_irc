@@ -12,7 +12,7 @@ SRCS = main.cpp \
        pass.cpp nick.cpp user.cpp \
 	   join.cpp part.cpp \
        privmsg.cpp mode.cpp quit.cpp topic.cpp \
-	   ping.cpp invite.cpp kick.cpp notice.cpp
+	   ping.cpp invite.cpp kick.cpp notice.cpp whois.cpp
 
 SRC_FILES = $(addprefix $(SRC_DIR)/,$(SRCS))
 

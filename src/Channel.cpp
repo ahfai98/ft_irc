@@ -233,39 +233,36 @@ bool Channel::setAsMember(const std::string& nickname)
 
 //ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 //returns -1 if fail, otherwise returns how many bytes sent
-static void sendMessageToClients(const std::vector<Client*>& clients, const std::string& msg, int excludeFd = -1)
+void Channel::sendMessageToClients(Server& server, const std::vector<Client*>& clients, const std::string& msg, int excludeFd)
 {
 	for (size_t i = 0; i < clients.size(); ++i)
 	{
 		int fd = clients[i]->getSocketFd();
 		if (fd != excludeFd)
-		{
-			if (send(fd, msg.c_str(), msg.size(), 0) == -1)
-				std::cerr << "send() failed on fd " << fd << std::endl;
-		}
+			server.sendResponse(fd, msg + "\r\n");
 	}
 }
 
-void Channel::broadcastMessageToOperators(const std::string& msg)
+void Channel::broadcastMessageToOperators(Server& server, const std::string& msg)
 {
-	sendMessageToClients(operators, msg);
+	sendMessageToClients(server, operators, msg);
 }
 
-void Channel::broadcastMessageToMembers(const std::string& msg)
+void Channel::broadcastMessageToMembers(Server& server, const std::string& msg)
 {
-	sendMessageToClients(members, msg);
+	sendMessageToClients(server, members, msg);
 }
 
-void Channel::broadcastMessage(const std::string& msg)
+void Channel::broadcastMessage(Server& server, const std::string& msg)
 {
-	sendMessageToClients(operators, msg);
-	sendMessageToClients(members, msg);
+	sendMessageToClients(server, operators, msg);
+	sendMessageToClients(server, members, msg);
 }
 
-void Channel::broadcastMessageExcept(const std::string& msg, int excludeFd)
+void Channel::broadcastMessageExcept(Server& server, const std::string& msg, int excludeFd)
 {
-	sendMessageToClients(operators, msg, excludeFd);
-	sendMessageToClients(members, msg, excludeFd);
+	sendMessageToClients(server, operators, msg, excludeFd);
+	sendMessageToClients(server, members, msg, excludeFd);
 }
 
 void Channel::addInvited(const std::string& nickname)

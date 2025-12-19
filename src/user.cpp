@@ -23,6 +23,22 @@ static bool isValidUsername(const std::string &username)
     return true;
 }
 
+
+static bool isValidRealname(const std::string &realname)
+{
+    if (realname.empty())
+        return false;
+    if (realname.size() > 32)
+        return false;
+    for (std::string::size_type i = 0; i < realname.size(); ++i)
+    {
+        unsigned char c = realname[i];
+        if (c < 32 || c == 127)
+            return false;
+    }
+    return true;
+}
+
 void Server::USER(const std::string &cmd, int fd)
 {
     Client *cli = getClientByFd(fd);
@@ -47,18 +63,17 @@ void Server::USER(const std::string &cmd, int fd)
     std::string username = tokens[1];
     std::string hostname = tokens[2];
     std::string servername = tokens[3];
-    //std::string realname = tokens[4];  not used
+    std::string realname = tokens[4];
     if (!isValidUsername(username))
     {
-        sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Username cannot be empty\r\n");
+        sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Invalid username\r\n");
         return;
     }
-    /*
-    if (hostname != "0" || servername != "*")
+    if (!isValidRealname(realname))
     {
-        sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Invalid parameters, expected 0 and *\r\n");
+        sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " USER :Invalid realname\r\n");
         return;
     }
-    */
     cli->setUsername(username);
+    cli->setRealname(realname);
 }
