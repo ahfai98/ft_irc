@@ -237,7 +237,10 @@ void Channel::sendMessageToClients(Server& server, const std::vector<Client*>& c
 {
 	for (size_t i = 0; i < clients.size(); ++i)
 	{
-		int fd = clients[i]->getSocketFd();
+		Client* cli = clients[i];
+		if (!cli->getRegistered())
+			continue;
+		int fd = cli->getSocketFd();
 		if (fd != excludeFd)
 			server.sendResponse(fd, msg + "\r\n");
 	}

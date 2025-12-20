@@ -12,13 +12,19 @@ void Server::PING(const std::string &cmd, int fd)
         return;
     }
     std::string token = tokens[1];
-    // Remove leading colon
-    if (!token.empty() && token[0] == ':')
-        token.erase(token.begin());
-    if (token.empty())
+    std::string payload;
+
+    if (!tokens[1].empty() && tokens[1][0] == ':')
     {
-        sendResponse(fd, ":ircserv 461 " + cli->getNickname() + " PING :Not enough parameters\r\n");
-        return;
+        for (size_t i = 1; i < tokens.size(); ++i)
+        {
+            if (i > 1)
+                payload += " ";
+            payload += tokens[i];
+        }
+        payload.erase(0, 1);
     }
-    sendResponse(fd, "PONG :" + token + "\r\n");
+    else
+        payload = tokens[1];
+    sendResponse(fd, ":ircserv PONG ircserv :" + payload + "\r\n");
 }
