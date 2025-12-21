@@ -81,6 +81,7 @@ void Server::MODE(const std::string &cmd, int fd)
             params += " " + limit_str;
         }
         sendResponse(fd, ":ircserv 324 " + nickname + " " + chName + " +" + modes + params + "\r\n");
+        sendResponse(fd, ":ircserv 329 " + nickname + " " + chName + " timestamp channel created\r\n");
         return;
     }
 
@@ -267,7 +268,7 @@ void Server::MODE(const std::string &cmd, int fd)
     //FINAL BROADCAST (ONE MESSAGE) 
     if (!outModes.empty())
     {
-        std::string msg = ":" + nickname + " MODE " + chName + " " + outModes;
+        std::string msg = ":" + cli->getPrefix() + " MODE " + chName + " " + outModes;
         for (size_t i = 0; i < outParams.size(); ++i)
             msg += " " + outParams[i];
         msg += "\r\n";

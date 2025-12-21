@@ -20,8 +20,10 @@ void Server::PASS(const std::string &cmd, int fd)
     }
     std::string pass = tokens[1];
     if (!pass.empty() && pass[0] == ':')
+    {
         pass.erase(pass.begin());
-
+        pass = trim(pass);
+    }
     if (pass != password)
     {
         cli->setPasswordAuthenticated(false);

@@ -1,15 +1,15 @@
-==66418== Memcheck, a memory error detector
-==66418== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
-==66418== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
-==66418== Command: ./ircserv 6667 pass
-==66418== Parent PID: 66417
-==66418== 
-==66418== 
-==66418== HEAP SUMMARY:
-==66418==     in use at exit: 0 bytes in 0 blocks
-==66418==   total heap usage: 650 allocs, 650 frees, 112,360 bytes allocated
-==66418== 
-==66418== All heap blocks were freed -- no leaks are possible
-==66418== 
-==66418== For lists of detected and suppressed errors, rerun with: -s
-==66418== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==41313== Memcheck, a memory error detector
+==41313== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==41313== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==41313== Command: ./ircserv 6667 pass
+==41313== Parent PID: 41312
+==41313== 
+==41313== 
+==41313== HEAP SUMMARY:
+==41313==     in use at exit: 0 bytes in 0 blocks
+==41313==   total heap usage: 756 allocs, 756 frees, 116,781 bytes allocated
+==41313== 
+==41313== All heap blocks were freed -- no leaks are possible
+==41313== 
+==41313== For lists of detected and suppressed errors, rerun with: -s
+==41313== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

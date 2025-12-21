@@ -24,7 +24,10 @@ void Server::KICK(const std::string &cmd, int fd)
             reason += tokens[i];
         }
         if (!reason.empty() && reason[0] == ':')
+        {
             reason = reason.substr(1);
+            reason = trim(reason);
+        }
     }
     std::vector<std::string> channels = splitString(channelsList, ',');
     std::vector<std::string> users = splitString(usersList, ',');

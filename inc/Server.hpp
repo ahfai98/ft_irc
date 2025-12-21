@@ -102,6 +102,7 @@ class Server
         void PING(const std::string &cmd, int fd);
         void NOTICE(const std::string &cmd, int fd);
         void WHOIS(const std::string &cmd, int fd);
+        void WHO(const std::string &cmd, int fd);
         
         void sendWelcome(Client *cli);
 

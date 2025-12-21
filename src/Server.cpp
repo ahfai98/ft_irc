@@ -18,6 +18,7 @@ void Server::initCommandMap()
     commandMap["PING"]   = &Server::PING;
     commandMap["NOTICE"]= &Server::NOTICE;
     commandMap["WHOIS"]= &Server::WHOIS;
+    commandMap["WHO"]= &Server::WHO;
 }
 
 Server::Server()

@@ -65,7 +65,10 @@ void Server::NICK(const std::string &cmd, int fd)
     }
     std::string newNickname = tokens[1];
     if (!newNickname.empty() && newNickname[0] == ':')
+    {
         newNickname.erase(newNickname.begin());
+        newNickname = trim(newNickname);
+    }
 
     // 432: ERR_ERRONEUSNICKNAME
     if (!isValidNickname(newNickname))

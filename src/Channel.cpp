@@ -298,3 +298,11 @@ bool Channel::isInvited(const std::string& nickname) const
 	return false;
 }
 
+std::vector<Client*> Channel::getClientsList()
+{
+    std::vector<Client*> clientsList;
+    clientsList.reserve(members.size() + operators.size());
+    clientsList.insert(clientsList.end(), members.begin(), members.end());
+    clientsList.insert(clientsList.end(), operators.begin(), operators.end());
+    return clientsList;
+}

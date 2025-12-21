@@ -69,6 +69,7 @@ class Channel
 		Client *getFirstMember();
 		Client *getOperatorByNickname(const std::string& nickname);
 		int 	getOperatorsCount() const;
+		std::vector<Client*> getClientsList(); 
 
 		//Utility Methods
 		void addMember(Client* c);

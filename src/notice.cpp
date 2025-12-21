@@ -22,7 +22,10 @@ void Server::NOTICE(const std::string &cmd, int fd)
         }
     }
     if (!message.empty() && message[0] == ':')
+    {
         message = message.substr(1);
+        message = trim(message);
+    }
     message = trim(message);
     if (message.empty())
         return;

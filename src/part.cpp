@@ -28,7 +28,10 @@ void Server::PART(const std::string &cmd, int fd)
             }
         }
         if (!partMessage.empty() && partMessage[0] == ':')
+        {
             partMessage = partMessage.substr(1);
+            partMessage = trim(partMessage);
+        }
     }
     for (size_t i = 0; i < channels.size(); ++i)
     {

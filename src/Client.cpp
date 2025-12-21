@@ -97,7 +97,7 @@ void Client::removeJoinedChannels(const std::string& name)
 
 std::string Client::getPrefix() const
 {
-    return getNickname() + "!" + getUsername() + "@" + "localhost";
+    return getNickname() + "!" + getUsername() + "@" + ipAddress;
 }
 
 std::string Client::getIpAddress() const{return ipAddress;}
