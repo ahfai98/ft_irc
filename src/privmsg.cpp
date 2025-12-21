@@ -17,7 +17,6 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
         sendResponse(fd, ":ircserv 412 " + nickname + " :No text to send\r\n");
         return;
     }
-    // Extract targets and message
     std::string targetStr = tokens[1];
     std::string message;
     if (tokens[2][0] != ':')
@@ -34,7 +33,6 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
     if (!message.empty() && message[0] == ':')
     {
         message = message.substr(1);
-        message = trim(message);
     }
     message = trim(message);
     if (message.empty())

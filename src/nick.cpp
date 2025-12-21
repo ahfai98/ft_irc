@@ -60,7 +60,7 @@ void Server::NICK(const std::string &cmd, int fd)
     // 431: ERR_NONICKNAMEGIVEN
     if (tokens.size() < 2)
     {
-        sendResponse(fd, "431 * :No nickname given\r\n");
+        sendResponse(fd, ":ircserv 431 * :No nickname given\r\n");
         return;
     }
     std::string newNickname = tokens[1];

@@ -43,6 +43,25 @@ void Server::MODE(const std::string &cmd, int fd)
         sendResponse(fd, ":ircserv 461 " + nickname + " MODE :Not enough parameters\r\n");
         return;
     }
+
+    // IF TARGET IS A NICKNAME (User Mode)
+    if (!tokens[1].empty() && tokens[1][0] != '#')
+    {
+        Client *targetCli = getClientByNickname(tokens[1]);
+        if (!targetCli)
+        {
+            sendResponse(fd, ":ircserv 401 " + tokens[1] + " :No such nick/channel\r\n");
+            return;
+        }
+        // If they are asking for their own mode or setting +i
+        // Just echo back a success to keep the client happy
+        if (tokens.size() == 2)
+            sendResponse(fd, ":ircserv 221 " + tokens[1] + " +i\r\n");
+        else
+            sendResponse(fd, ":" + tokens[1] + " MODE " + tokens[1] + " " + tokens[2] + "\r\n");
+        return;
+    }
+
     std::string chName = tokens[1];
     if (!isValidChannelName(chName))
     {
@@ -59,29 +78,70 @@ void Server::MODE(const std::string &cmd, int fd)
     //Query
     if (tokens.size() == 2)
     {
-        std::string modes = "";
-        std::string params = "";
+        std::string modeChars = "";
+        std::vector<std::string> qParams;
 
-        if(ch->getInviteMode())
-            modes += "i";
-        if(ch->getTopicMode())
-            modes += "t";
-        if(ch->getKeyMode())
-            modes += "k";
-        if(ch->getLimitMode())
-            modes += "l";
-        if(ch->getKeyMode() && ch->isChannelOperator(nickname))
-            params += ch->getChannelKey();
-        if(ch->getLimitMode())
+        // Check each mode. Note: 'n' and 't' are often default on many servers.
+        if (ch->getInviteMode())
+            modeChars += "i";
+        if (ch->getTopicMode())
+            modeChars += "t";
+        if (ch->getKeyMode())
         {
-            int limit = ch->getChannelLimit();
-            std::ostringstream oss;
-            oss << limit;
-            std::string limit_str = oss.str();
-            params += " " + limit_str;
+            modeChars += "k";
+            qParams.push_back(ch->getChannelKey());
         }
-        sendResponse(fd, ":ircserv 324 " + nickname + " " + chName + " +" + modes + params + "\r\n");
-        sendResponse(fd, ":ircserv 329 " + nickname + " " + chName + " timestamp channel created\r\n");
+        if (ch->getLimitMode())
+        {
+            modeChars += "l";
+            std::ostringstream oss;
+            oss << ch->getChannelLimit();
+            qParams.push_back(oss.str());
+        }
+
+        // If no modes are set, IRC standard usually expects at least a '+' or '+n'
+        // Irssi specifically dislikes a '+' with nothing following it.
+        std::string modeStr = modeChars.empty() ? "+" : "+" + modeChars;
+
+        std::string fullResponse = ":ircserv 324 " + nickname + " " + chName + " " + modeStr;
+        
+        // Append parameters (key/limit) if they exist
+        for (size_t i = 0; i < qParams.size(); ++i)
+        {
+            fullResponse += " " + qParams[i];
+        }
+        fullResponse += "\r\n";
+
+        // Send RPL_CHANNELMODEIS (324)
+        sendResponse(fd, fullResponse);
+
+        // Send RPL_CREATIONTIME (329) 
+        // Ensure getTimeChannelCreated() returns a string of digits (Unix Timestamp)
+        std::string creationTime = ch->getTimeChannelCreated();
+        sendResponse(fd, ":ircserv 329 " + nickname + " " + chName + " " + creationTime + "\r\n");
+        
+        return;
+    }
+
+    // 1. Check if the client is asking for the Ban List
+    // This catches 'b', '+b', and 'b '
+    if (tokens.size() >= 3 && tokens[2].find('b') != std::string::npos)
+    {
+        sendResponse(fd, ":ircserv 368 " + nickname + " " + chName + " :End of channel ban list\r\n");
+        return;
+    }
+
+    // 2. Check if the client is asking for the Exception List
+    if (tokens.size() == 3 && tokens[2] == "e")
+    {
+        sendResponse(fd, ":ircserv 349 " + nickname + " " + chName + " :End of channel exception list\r\n");
+        return;
+    }
+
+    // 3. Check if the client is asking for the Invite-Exception List
+    if (tokens.size() == 3 && tokens[2] == "I")
+    {
+        sendResponse(fd, ":ircserv 347 " + nickname + " " + chName + " :End of channel invite exception list\r\n");
         return;
     }
 

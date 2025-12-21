@@ -180,12 +180,12 @@ void Server::receiveClientData(int fd)
 {
     Client* cli = getClientByFd(fd);
     if (!cli)
-        return; // Client already removed, avoid use-after-free
+        return;
 
     char buff[512];
-    ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
+    std::memset(buff, 0, sizeof(buff));
+    ssize_t bytes = recv(fd, buff, sizeof(buff) - 1, 0);
 
-    // Client disconnected or error
     if (bytes <= 0)
     {
         std::cout << "Client disconnected: fd=" << fd << std::endl;
@@ -193,57 +193,68 @@ void Server::receiveClientData(int fd)
         return;
     }
 
-    // Append new data to client's buffer
-    std::string currentBuffer = cli->getReceiveBuffer() + std::string(buff, bytes);
-    cli->setReceiveBuffer(currentBuffer);
+    // Append raw bytes to the client's internal buffer
+    cli->getReceiveBuffer().append(buff, bytes);
 
-    // Reference updated buffer safely
-    std::string& buf = cli->getReceiveBuffer();
+    // Process all complete commands found in the buffer
+    std::string &buffer = cli->getReceiveBuffer();
     size_t pos;
-    while (true)
+    while ((pos = buffer.find_first_of("\r\n")) != std::string::npos)
     {
-        pos = buf.find("\r\n");
-        bool hasCRLF = true;
-        if (pos == std::string::npos)
-        {
-            pos = buf.find("\n");
-            hasCRLF = false;
-        }
-        if (pos == std::string::npos)
-            break; // No complete command
+        // Extract the command
+        std::string command = buffer.substr(0, pos);
+        
+        // Find the start of the next command by skipping ALL trailing \r and \n
+        size_t next_cmd = buffer.find_first_not_of("\r\n", pos);
 
-        Client* checkCli = getClientByFd(fd);
-        if (!checkCli)
+        // Execute only if not an empty line
+        if (!command.empty())
+            parseExecuteCommand(command, fd);
+
+        // Check if client was removed by the command (e.g., QUIT)
+        if (!getClientByFd(fd))
             return;
-        std::string command = buf.substr(0, (hasCRLF && pos > 0 && buf[pos-1] == '\r') ? pos-1 : pos);
-        parseExecuteCommand(command, fd);
-        checkCli = getClientByFd(fd);
-        if (!checkCli)
-            return;
-        buf.erase(0, hasCRLF ? pos+2 : pos+1); // remove processed line + newline(s)
+
+        // Erase the processed command and the delimiters
+        if (next_cmd == std::string::npos) {
+            buffer.clear();
+            break;
+        }
+        buffer.erase(0, next_cmd);
     }
 }
 
 std::vector<std::string> Server::splitCommand(const std::string &cmdLine)
 {
     std::vector<std::string> tokens;
+    if (cmdLine.empty())
+        return tokens;
+
     std::istringstream iss(cmdLine);
     std::string token;
 
     while (iss >> token)
     {
+        // Handle IRC trailing parameter (the part after the colon)
         if (!token.empty() && token[0] == ':')
         {
             std::string trailing;
             std::getline(iss, trailing);
-            tokens.push_back(token + trailing); 
+            
+            // The result is the rest of the first word (minus the colon) 
+            // plus the rest of the line from getline
+            std::string fullTrailing = "";
+            if (token.size() > 1)
+                fullTrailing = token.substr(1);
+            fullTrailing += trailing;
+            
+            tokens.push_back(fullTrailing);
             break;
         }
         tokens.push_back(token);
     }
     return tokens;
 }
-
 
 void Server::parseExecuteCommand(std::string &cmd, int fd)
 {
@@ -266,7 +277,26 @@ void Server::parseExecuteCommand(std::string &cmd, int fd)
         command[i] = toupper(command[i]);
 
     if (command == "CAP")
+    {
+        if (tokens.size() < 2)
+            return;
+
+        std::string subCommand = tokens[1];
+        for (size_t i = 0; i < subCommand.size(); ++i)
+            subCommand[i] = toupper(subCommand[i]);
+
+        if (subCommand == "LS")
+        {
+            // Tell the client we support no extra capabilities
+            sendResponse(fd, ":ircserv CAP * LS :\r\n");
+        }
+        else if (subCommand == "END")
+        {
+            // Negotiation finished. The client will now proceed with NICK/USER
+            std::cout << "CAP negotiation ended for fd: " << fd << std::endl;
+        }
         return;
+    }
     CommandHandler handler = NULL;
     std::map<std::string, CommandHandler>::iterator it = commandMap.find(command);
     if (it != commandMap.end())
@@ -384,7 +414,6 @@ void Server::removeClientFromAllChannels(Client *cli)
         ch->removeMemberByFd(cli->getSocketFd());
         ch->removeOperatorByFd(cli->getSocketFd());
     }
-    cleanupEmptyChannels();
 }
 
 void Server::addChannel(Channel* ch)
@@ -513,6 +542,9 @@ void Server::sendWelcome(Client *cli)
     sendResponse(fd, ":ircserv 002 " + nick + " :Your host is ircserv, running ft_irc" + "\r\n");
     sendResponse(fd, ":ircserv 003 " + nick + " :This server was created " + getDateCreated()+ "\r\n");
     sendResponse(fd, ":ircserv 004 " + nick + " ircserv ft_irc o o"+ "\r\n");
+    // 005: ISUPPORT (CRITICAL for instant sync)
+    // Tells Irssi which channel types and modes are valid
+    sendResponse(fd, ":ircserv 005 " + nick + " CHANTYPES=# PREFIX=(o)@ CHANMODES=i,t,k,l :are supported by this server\r\n");
 }
 
 void Server::cleanupEmptyChannels()

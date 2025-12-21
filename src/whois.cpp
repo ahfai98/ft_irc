@@ -41,7 +41,7 @@ void Server::WHO(const std::string &cmd, int fd)
     if (!cli) return;
     if (tokens.size() < 2)
     {
-        sendResponse(fd, ":ircserv 315 " + cli->getNickname() + " :End of WHO list");
+        sendResponse(fd, ":ircserv 315 " + cli->getNickname() + " :End of WHO list\r\n");
         return;
     }
 
@@ -69,5 +69,5 @@ void Server::WHO(const std::string &cmd, int fd)
             }
         }
     }
-    sendResponse(fd, ":ircserv 315 " + requesterNick + " " + target + " :End of WHO list");
+    sendResponse(fd, ":ircserv 315 " + requesterNick + " " + target + " :End of WHO list\r\n");
 }

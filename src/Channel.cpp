@@ -38,13 +38,10 @@ void Channel::setTopicSetter(const std::string& setter){topicSetter = setter;}
 
 void Channel::setTimeChannelCreated()
 {
-	time_t now = time(NULL);
-    struct tm *t = localtime(&now);
+    time_t now = time(NULL);
     std::ostringstream oss;
-    oss << std::setw(4) << std::setfill('0') << (t->tm_year + 1900) << "-"
-        << std::setw(2) << std::setfill('0') << (t->tm_mon + 1) << "-"
-        << std::setw(2) << std::setfill('0') << t->tm_mday;
-	timeChannelCreated = oss.str();
+    oss << now;
+    timeChannelCreated = oss.str();
 }
 
 void Channel::setTimeTopicCreated()
