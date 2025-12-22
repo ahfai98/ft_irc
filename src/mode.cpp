@@ -310,3 +310,4 @@ void Server::MODE(const std::string &cmd, int fd)
 		ch->broadcastMessage(*this, msg);
 	}
 }
+
