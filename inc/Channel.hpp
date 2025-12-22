@@ -80,8 +80,6 @@ class Channel
 		bool setAsMember(const std::string& nickname);
 		void broadcastMessage(Server& server, const std::string& msg);
 		void broadcastMessageExcept(Server& server, const std::string& msg, int fd);
-		void broadcastMessageToMembers(Server& server, const std::string& msg);
-		void broadcastMessageToOperators(Server& server, const std::string& msg);
 		void sendMessageToClients(Server& server, const std::vector<Client*>& clients, const std::string& msg, int excludeFd = -1);
 		void addInvited(const std::string& nickname);
 		void removeInvited(const std::string& nickname);

@@ -38,10 +38,10 @@ void Channel::setTopicSetter(const std::string& setter){topicSetter = setter;}
 
 void Channel::setTimeChannelCreated()
 {
-    time_t now = time(NULL);
-    std::ostringstream oss;
-    oss << now;
-    timeChannelCreated = oss.str();
+	time_t now = time(NULL);
+	std::ostringstream oss;
+	oss << now;
+	timeChannelCreated = oss.str();
 }
 
 void Channel::setTimeTopicCreated()
@@ -101,28 +101,25 @@ bool Channel::isInChannel(const std::string& nickname) const
 	return (isChannelOperator(nickname) || isChannelMember(nickname));
 }
 
-//get operators and members name list for JOIN command
+//Get Names List for 353 Reply
 std::string Channel::getNamesList() const
 {
-	std::ostringstream oss;
-	//Add operators
+	std::string list;
+	//Add operators with @ prefix
 	for (size_t i = 0; i < operators.size(); ++i)
 	{
-		if (i > 0)
-			oss << " ";
-		oss << "@" << operators[i]->getNickname();
+		if (!list.empty())
+			list += " ";
+		list += "@" + operators[i]->getNickname();
 	}
-	//Add space between operators and members
-	if (!operators.empty() && !members.empty())
-		oss << " ";
-	//Add members
+	//Add regular members
 	for (size_t i = 0; i < members.size(); ++i)
 	{
-		if (i > 0)
-			oss << " ";
-		oss << members[i]->getNickname();
+		if (!list.empty())
+			list += " ";
+		list += members[i]->getNickname();
 	}
-	return oss.str();
+	return list;
 }
 
 Client* Channel::getClientByFd(std::vector<Client*>& vec, int fd)
@@ -228,7 +225,6 @@ bool Channel::setAsMember(const std::string& nickname)
 	return false;
 }
 
-//returns -1 if fail, otherwise returns how many bytes sent
 void Channel::sendMessageToClients(Server& server, const std::vector<Client*>& clients, const std::string& msg, int excludeFd)
 {
 	for (size_t i = 0; i < clients.size(); ++i)
@@ -238,22 +234,13 @@ void Channel::sendMessageToClients(Server& server, const std::vector<Client*>& c
 			continue;
 		int fd = cli->getSocketFd();
 		if (fd != excludeFd)
-			server.sendResponse(fd, msg + "\r\n");
+			server.sendResponse(fd, msg);
 	}
-}
-
-void Channel::broadcastMessageToOperators(Server& server, const std::string& msg)
-{
-	sendMessageToClients(server, operators, msg);
-}
-
-void Channel::broadcastMessageToMembers(Server& server, const std::string& msg)
-{
-	sendMessageToClients(server, members, msg);
 }
 
 void Channel::broadcastMessage(Server& server, const std::string& msg)
 {
+	
 	sendMessageToClients(server, operators, msg);
 	sendMessageToClients(server, members, msg);
 }
@@ -296,9 +283,9 @@ bool Channel::isInvited(const std::string& nickname) const
 
 std::vector<Client*> Channel::getClientsList()
 {
-    std::vector<Client*> clientsList;
-    clientsList.reserve(members.size() + operators.size());
-    clientsList.insert(clientsList.end(), members.begin(), members.end());
-    clientsList.insert(clientsList.end(), operators.begin(), operators.end());
-    return clientsList;
+	std::vector<Client*> clientsList;
+	clientsList.reserve(members.size() + operators.size());
+	clientsList.insert(clientsList.end(), members.begin(), members.end());
+	clientsList.insert(clientsList.end(), operators.begin(), operators.end());
+	return clientsList;
 }

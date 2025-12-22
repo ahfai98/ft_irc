@@ -166,11 +166,11 @@ void Server::acceptClient()
 	}
 	Client* cli = new Client(clientFd);
 	if (!cli)
-    {
-        std::cerr << "Memory allocation failed for new client" << std::endl;
-        close(clientFd);
-        return;
-    }
+	{
+		std::cerr << "Memory allocation failed for new client" << std::endl;
+		close(clientFd);
+		return;
+	}
 	cli->setIpAddress(inet_ntoa(clientAddr.sin_addr)); 
 	//convert IPv4 address from binary(network byte order) into string (e.g., "192.168.1.1")
 	addClient(cli);
@@ -202,10 +202,10 @@ void Server::receiveClientData(int fd)
 	//Protect against Buffer Overflow/ Infinite "Partial Messages"
 	if (cli->getReceiveBuffer().size() > 5120)
 	{ //Safety limit of 10 messages
-        std::cerr << "Client <" << fd << "> buffer overflow. Closing." << std::endl;
-        removeClient(fd);
-        return;
-    }
+		std::cerr << "Client <" << fd << "> buffer overflow. Closing." << std::endl;
+		removeClient(fd);
+		return;
+	}
 	std::string &buffer = cli->getReceiveBuffer();
 	size_t pos;
 	while ((pos = buffer.find("\n")) != std::string::npos)
@@ -233,11 +233,11 @@ void Server::handleClientWrite(int fd)
 		return;
 	ssize_t sent = send(fd, buffer.c_str(), buffer.size(), 0);
 	if (sent == -1)
-    {
-        perror("send error");
-        removeClient(fd);
-        return;
-    }
+	{
+		perror("send error");
+		removeClient(fd);
+		return;
+	}
 	if (sent > 0)
 		buffer.erase(0, sent);
 	if (buffer.empty())
@@ -485,22 +485,22 @@ void Server::removePollfd(int fd)
 
 void Server::sendResponse(int fd, const std::string &message)
 {
-    Client* cli = getClientByFd(fd);
-    if (!cli || message.empty())
-        return;
-    std::string& buffer = cli->getSendBuffer();
-    buffer.append(message);
-    if (buffer.size() < 2 || buffer[buffer.size() - 2] != '\r' || buffer[buffer.size() - 1] != '\n')
-        buffer.append("\r\n");
-    for (size_t i = 0; i < pollfds.size(); ++i)
-    {
-        if (pollfds[i].fd == fd)
-        {
-            // If POLLOUT is already set, we don't need to do anything
-            pollfds[i].events |= POLLOUT;
-            break;
-        }
-    }
+	Client* cli = getClientByFd(fd);
+	if (!cli || message.empty())
+		return;
+	std::string& buffer = cli->getSendBuffer();
+	buffer.append(message);
+	if (buffer.size() < 2 || buffer[buffer.size() - 2] != '\r' || buffer[buffer.size() - 1] != '\n')
+		buffer.append("\r\n");
+	for (size_t i = 0; i < pollfds.size(); ++i)
+	{
+		if (pollfds[i].fd == fd)
+		{
+			// If POLLOUT is already set, we don't need to do anything
+			pollfds[i].events |= POLLOUT;
+			break;
+		}
+	}
 }
 
 void Server::sendWelcome(Client *cli)

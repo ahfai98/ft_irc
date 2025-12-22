@@ -84,23 +84,23 @@ void Client::addJoinedChannels(const std::string& name)
 void Client::removeJoinedChannels(const std::string& name)
 {
 	std::vector<std::string>::iterator it;
-    for (it = joinedChannels.begin(); it != joinedChannels.end(); ++it)
+	for (it = joinedChannels.begin(); it != joinedChannels.end(); ++it)
 	{
-        if (*it == name)
+		if (*it == name)
 		{
-            joinedChannels.erase(it);
-            return;
-        }
-    }
+			joinedChannels.erase(it);
+			return;
+		}
+	}
 }
 
 std::string Client::getPrefix() const
 {
-    // Format: nick!user@host
+	//Format: nick!user@host
 	std::string user;
 	if(username.empty())
 		user = "unknown";
 	else
 		user = username;
-    return nickname + "!" + user + "@" + ipAddress;
+	return nickname + "!" + user + "@" + ipAddress;
 }
