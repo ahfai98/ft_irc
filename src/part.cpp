@@ -16,7 +16,7 @@ void Server::PART(const std::string &cmd, int fd)
 	std::string partMessage = nickname + " has left the channel";
 	if (tokens.size() > 2)
 	{
-		if (tokens[2][0] != ':')
+		if (!tokens[2].empty() && tokens[2][0] != ':')
 			partMessage = tokens[2];
 		else
 		{

@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 		std::signal(SIGPIPE, SIG_IGN);  // Ignore broken pipe signals
 
 		std::cout << "Starting IRC server on port " << port << "..." << std::endl;
-		ircServer.serverInit(port, password);
+		ircServer.initServer(port, password);
 	}
 	catch (const std::exception& e)
 	{

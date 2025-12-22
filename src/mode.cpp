@@ -43,8 +43,7 @@ void Server::MODE(const std::string &cmd, int fd)
 		sendResponse(fd, ":ircserv 461 " + nickname + " MODE :Not enough parameters\r\n");
 		return;
 	}
-
-	// IF TARGET IS A NICKNAME (User Mode)
+	//nickname
 	if (!tokens[1].empty() && tokens[1][0] != '#')
 	{
 		Client *targetCli = getClientByNickname(tokens[1]);
@@ -53,15 +52,12 @@ void Server::MODE(const std::string &cmd, int fd)
 			sendResponse(fd, ":ircserv 401 " + tokens[1] + " :No such nick/channel\r\n");
 			return;
 		}
-		// If they are asking for their own mode or setting +i
-		// Just echo back a success to keep the client happy
 		if (tokens.size() == 2)
 			sendResponse(fd, ":ircserv 221 " + tokens[1] + " +i\r\n");
 		else
 			sendResponse(fd, ":" + tokens[1] + " MODE " + tokens[1] + " " + tokens[2] + "\r\n");
 		return;
 	}
-
 	std::string chName = tokens[1];
 	if (!isValidChannelName(chName))
 	{
@@ -79,9 +75,7 @@ void Server::MODE(const std::string &cmd, int fd)
 	if (tokens.size() == 2)
 	{
 		std::string modeChars = "";
-		std::vector<std::string> qParams;
-
-		// Check each mode. Note: 'n' and 't' are often default on many servers.
+		std::vector<std::string> params;
 		if (ch->getInviteMode())
 			modeChars += "i";
 		if (ch->getTopicMode())
@@ -89,73 +83,54 @@ void Server::MODE(const std::string &cmd, int fd)
 		if (ch->getKeyMode())
 		{
 			modeChars += "k";
-			qParams.push_back(ch->getChannelKey());
+			params.push_back(ch->getChannelKey());
 		}
 		if (ch->getLimitMode())
 		{
 			modeChars += "l";
 			std::ostringstream oss;
 			oss << ch->getChannelLimit();
-			qParams.push_back(oss.str());
+			params.push_back(oss.str());
 		}
-
-		// If no modes are set, IRC standard usually expects at least a '+' or '+n'
-		// Irssi specifically dislikes a '+' with nothing following it.
-		std::string modeStr = modeChars.empty() ? "+" : "+" + modeChars;
-
+		std::string modeStr = modeChars.empty() ? "+n" : "+" + modeChars;
 		std::string fullResponse = ":ircserv 324 " + nickname + " " + chName + " " + modeStr;
-		
-		// Append parameters (key/limit) if they exist
-		for (size_t i = 0; i < qParams.size(); ++i)
-		{
-			fullResponse += " " + qParams[i];
-		}
+		for (size_t i = 0; i < params.size(); ++i)
+			fullResponse += " " + params[i];
 		fullResponse += "\r\n";
-
-		// Send RPL_CHANNELMODEIS (324)
 		sendResponse(fd, fullResponse);
-
-		// Send RPL_CREATIONTIME (329) 
-		// Ensure getTimeChannelCreated() returns a string of digits (Unix Timestamp)
 		std::string creationTime = ch->getTimeChannelCreated();
 		sendResponse(fd, ":ircserv 329 " + nickname + " " + chName + " " + creationTime + "\r\n");
-		
 		return;
 	}
-
-	// 1. Check if the client is asking for the Ban List
+	// 1. Check for the Ban List
 	// This catches 'b', '+b', and 'b '
 	if (tokens.size() >= 3 && tokens[2].find('b') != std::string::npos)
 	{
 		sendResponse(fd, ":ircserv 368 " + nickname + " " + chName + " :End of channel ban list\r\n");
 		return;
 	}
-
-	// 2. Check if the client is asking for the Exception List
+	// 2. Check for the Exception List
 	if (tokens.size() == 3 && tokens[2] == "e")
 	{
 		sendResponse(fd, ":ircserv 349 " + nickname + " " + chName + " :End of channel exception list\r\n");
 		return;
 	}
-
-	// 3. Check if the client is asking for the Invite-Exception List
+	// 3. Check for the Invite-Exception List
 	if (tokens.size() == 3 && tokens[2] == "I")
 	{
 		sendResponse(fd, ":ircserv 347 " + nickname + " " + chName + " :End of channel invite exception list\r\n");
 		return;
 	}
-
 	std::string modeset = tokens[2];
 	std::vector<std::string> params(tokens.begin() + 3, tokens.end());
-	// Check is operator
 	if (!ch->isChannelOperator(nickname))
 	{
 		sendResponse(fd, ":ircserv 482 " + nickname + " " + chName + " :You're not channel operator\r\n");
 		return;
 	}
-	char current_op = '\0';
-	char last_op = '\0';
-	size_t param_index = 0;
+	char currentOp = '\0';
+	char lastOp = '\0';
+	size_t paramIndex = 0;
 	std::string outModes;
 	std::vector<std::string> outParams;
 	size_t paramModeCount = 0;
@@ -165,39 +140,39 @@ void Server::MODE(const std::string &cmd, int fd)
 		char mode = modeset[i];
 		if (mode == '+' || mode == '-')
 		{
-			current_op = mode;
+			currentOp = mode;
 			continue;
 		}
-		if (current_op == '\0')
+		if (currentOp == '\0')
 			continue;
 		//INVITE (+i / -i) 
 		if (mode == 'i')
 		{
-			if (current_op != last_op)
+			if (currentOp != lastOp)
 			{
-				outModes += current_op;
-				last_op = current_op;
+				outModes += currentOp;
+				lastOp = currentOp;
 			}
 			outModes += 'i';
-			ch->setInviteMode(current_op == '+');
+			ch->setInviteMode(currentOp == '+');
 			continue;
 		}
 		//TOPIC (+t / -t) 
 		if (mode == 't')
 		{
-			if (current_op != last_op)
+			if (currentOp != lastOp)
 			{
-				outModes += current_op;
-				last_op = current_op;
+				outModes += currentOp;
+				lastOp = currentOp;
 			}
 			outModes += 't';
-			ch->setTopicMode(current_op == '+');
+			ch->setTopicMode(currentOp == '+');
 			continue;
 		}
 		//OPERATOR (+o / -o) 
 		if (mode == 'o')
 		{
-			if (param_index >= params.size())
+			if (paramIndex >= params.size())
 			{
 				sendResponse(fd, ":ircserv 461 " + nickname + " MODE :Not enough parameters\r\n");
 				continue;
@@ -205,25 +180,25 @@ void Server::MODE(const std::string &cmd, int fd)
 			//Discard parameter if already more than max 3
 			if (paramModeCount >= MAX_PARAM_MODES)
 			{
-				param_index++;
+				paramIndex++;
 				continue;
 			}
-			std::string targetNick = params[param_index++];
+			std::string targetNick = params[paramIndex++];
 			Client *target = getClientByNickname(targetNick);
 			if (!target || !ch->isInChannel(targetNick))
 			{
 				sendResponse(fd, ":ircserv 441 " + nickname + " " + targetNick + " " + chName + " :They aren't on that channel\r\n");
 				continue;
 			}
-			if (current_op == '+')
+			if (currentOp == '+')
 				ch->setAsOperator(targetNick);
 			else
 				ch->setAsMember(targetNick);
 			paramModeCount++;
-			if (current_op != last_op)
+			if (currentOp != lastOp)
 			{
-				outModes += current_op;
-				last_op = current_op;
+				outModes += currentOp;
+				lastOp = currentOp;
 			}
 			outModes += 'o';
 			outParams.push_back(targetNick);
@@ -232,9 +207,9 @@ void Server::MODE(const std::string &cmd, int fd)
 		//CHANNEL KEY (+k / -k) 
 		if (mode == 'k')
 		{
-			if (current_op == '+')
+			if (currentOp == '+')
 			{
-				if (param_index >= params.size())
+				if (paramIndex >= params.size())
 				{
 					sendResponse(fd, ":ircserv 461 " + nickname + " MODE :Not enough parameters\r\n");
 					continue;
@@ -242,10 +217,10 @@ void Server::MODE(const std::string &cmd, int fd)
 				//Discard parameter if more than max 3
 				if (paramModeCount >= MAX_PARAM_MODES)
 				{
-					param_index++;
+					paramIndex++;
 					continue;
 				}
-				std::string key = params[param_index++];
+				std::string key = params[paramIndex++];
 				if (!isValidChannelKey(key))
 				{
 					sendResponse(fd, ":ircserv 472 " + nickname + " k :Invalid channel key\r\n");
@@ -254,10 +229,10 @@ void Server::MODE(const std::string &cmd, int fd)
 				ch->setChannelKey(key);
 				ch->setKeyMode(true);
 				paramModeCount++;
-				if (current_op != last_op)
+				if (currentOp != lastOp)
 				{
-					outModes += current_op;
-					last_op = current_op;
+					outModes += currentOp;
+					lastOp = currentOp;
 				}
 				outModes += 'k';
 				outParams.push_back(key);
@@ -266,10 +241,10 @@ void Server::MODE(const std::string &cmd, int fd)
 			{
 				ch->setChannelKey("");
 				ch->setKeyMode(false);
-				if (current_op != last_op)
+				if (currentOp != lastOp)
 				{
-					outModes += current_op;
-					last_op = current_op;
+					outModes += currentOp;
+					lastOp = currentOp;
 				}
 				outModes += 'k';
 			}
@@ -278,9 +253,9 @@ void Server::MODE(const std::string &cmd, int fd)
 		//USER LIMIT (+l / -l) 
 		if (mode == 'l')
 		{
-			if (current_op == '+')
+			if (currentOp == '+')
 			{
-				if (param_index >= params.size())
+				if (paramIndex >= params.size())
 				{
 					sendResponse(fd, ":ircserv 461 " + nickname + " MODE :Not enough parameters\r\n");
 					continue;
@@ -288,10 +263,10 @@ void Server::MODE(const std::string &cmd, int fd)
 				//Discard parameter if more than max 3
 				if (paramModeCount >= MAX_PARAM_MODES)
 				{
-					param_index++;
+					paramIndex++;
 					continue;
 				}
-				std::string limitStr = params[param_index++];
+				std::string limitStr = params[paramIndex++];
 				if (!isValidLimit(limitStr))
 				{
 					sendResponse(fd, ":ircserv 501 " + nickname + " MODE :Invalid limit\r\n");
@@ -301,10 +276,10 @@ void Server::MODE(const std::string &cmd, int fd)
 				ch->setChannelLimit(limit);
 				ch->setLimitMode(true);
 				paramModeCount++;
-				if (current_op != last_op)
+				if (currentOp != lastOp)
 				{
-					outModes += current_op;
-					last_op = current_op;
+					outModes += currentOp;
+					lastOp = currentOp;
 				}
 				outModes += 'l';
 				outParams.push_back(limitStr);
@@ -313,19 +288,19 @@ void Server::MODE(const std::string &cmd, int fd)
 			{
 				ch->setChannelLimit(-1);
 				ch->setLimitMode(false);
-				if (current_op != last_op)
+				if (currentOp != lastOp)
 				{
-					outModes += current_op;
-					last_op = current_op;
+					outModes += currentOp;
+					lastOp = currentOp;
 				}
 				outModes += 'l';
 			}
 			continue;
 		}
-		//UNKNOWN MODE 
+		//Unknown 
 		sendResponse(fd, ":ircserv 472 " + nickname + " " + std::string(1, mode) + " :is unknown mode char to me\r\n");
 	}
-	//FINAL BROADCAST (ONE MESSAGE) 
+	//Broadcast 
 	if (!outModes.empty())
 	{
 		std::string msg = ":" + cli->getPrefix() + " MODE " + chName + " " + outModes;

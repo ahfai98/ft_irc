@@ -103,7 +103,7 @@ void Server::setupServerSocket()
 	pollfds.push_back(p);
 }
 
-void Server::serverInit(int port, const std::string &password)
+void Server::initServer(int port, const std::string &password)
 {
 	this->port = port;
 	this->password = password;
@@ -496,7 +496,7 @@ void Server::sendResponse(int fd, const std::string &message)
 	{
 		if (pollfds[i].fd == fd)
 		{
-			// If POLLOUT is already set, we don't need to do anything
+			//set POLLOUT
 			pollfds[i].events |= POLLOUT;
 			break;
 		}

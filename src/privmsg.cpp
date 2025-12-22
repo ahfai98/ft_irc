@@ -19,7 +19,7 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
 	}
 	std::string targetStr = tokens[1];
 	std::string message;
-	if (tokens[2][0] != ':')
+	if (!tokens[2].empty() && tokens[2][0] != ':')
 		message = tokens[2];
 	else
 	{
@@ -31,9 +31,7 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
 		}
 	}
 	if (!message.empty() && message[0] == ':')
-	{
 		message = message.substr(1);
-	}
 	message = trim(message);
 	if (message.empty())
 	{
@@ -59,7 +57,6 @@ void Server::PRIVMSG(const std::string &cmd, int fd)
 		std::string target = targets[i];
 		if (target.empty())
 			continue;
-
 		if (target[0] == '#')
 		{ // Channel
 			std::string chName = target.substr(1);

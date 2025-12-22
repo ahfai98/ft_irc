@@ -64,7 +64,7 @@ class Server
 		//Utility Methods
 		static void signalHandler(int signal);
 		void setupServerSocket();
-		void serverInit(int port,const std::string& password);
+		void initServer(int port,const std::string& password);
 		void acceptClient();
 		void receiveClientData(int fd);
 		void handleClientWrite(int fd);

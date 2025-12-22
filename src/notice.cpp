@@ -10,7 +10,7 @@ void Server::NOTICE(const std::string &cmd, int fd)
 		return;
 	std::string targetStr = tokens[1];
 	std::string message;
-	if (tokens[2][0] != ':')
+	if (!tokens[2].empty() && tokens[2][0] != ':')
 		message = tokens[2];
 	else
 	{

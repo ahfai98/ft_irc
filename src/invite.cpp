@@ -48,9 +48,9 @@ void Server::INVITE(const std::string &cmd, int fd)
 		return;
 	}
 	ch->addInvited(targetNick);
-	// Notify inviter
+	//Notify inviter
 	sendResponse(fd, ":ircserv 341 " + inviterNick + " " + targetNick + " " + chName + "\r\n");
-	// Notify target
+	//Notify target
 	std::string msg = ":" + inviter->getPrefix() + " INVITE " + targetNick + " " + chName + "\r\n";
 	sendResponse(target->getSocketFd(), msg);
 }

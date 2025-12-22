@@ -1,6 +1,5 @@
 #include "Server.hpp"
 
-// Helper: split string by delimiter
 std::vector<std::string> Server::splitString(const std::string &str, char delim)
 {
 	std::vector<std::string> result;
@@ -42,21 +41,6 @@ void Server::JOIN(const std::string &cmd, int fd)
 		return;
 	std::string nickname = cli->getNickname();
 	std::vector<std::string> tokens = splitString(cmd, ' ');
-	if (tokens.size() == 2 && tokens[1] == "0")
-	{
-		std::vector<std::string> joinedChannels = cli->getJoinedChannels();
-		if (joinedChannels.empty())
-			return;
-		std::string partMessage = nickname + " has left the channel";
-		for (size_t i = 0; i != joinedChannels.size(); ++i)
-		{
-			Channel *ch = getChannel(joinedChannels[i]);
-			if (!ch)
-				continue;
-			PART("PART #" + joinedChannels[i], fd);
-		}
-		return;
-	}
 	if (tokens.size() < 2)
 	{
 		sendResponse(fd, ":ircserv 461 " + nickname + " JOIN :Not enough parameters\r\n");
@@ -114,14 +98,14 @@ void Server::JOIN(const std::string &cmd, int fd)
 				sendResponse(fd, ":ircserv 471 " + nickname + " " + chName + " :Cannot join channel (+l)\r\n");
 				continue;
 			}
-			// Add client
+			//Add client
 			ch->addMember(cli);
 			cli->addJoinedChannels(internalChannelName);
 			if (ch->isInvited(nickname))
 				ch->removeInvited(nickname);
 			// Send JOIN, NAMES, TOPIC messages
 			std::string joinMsg = ":" + cli->getPrefix() + " JOIN " + chName + "\r\n";
-			ch->broadcastMessage(*this, joinMsg); // broadcast JOIN to other members
+			ch->broadcastMessage(*this, joinMsg);
 			if (!ch->getTopicName().empty())
 			{
 				sendResponse(fd, ":ircserv 332 " + nickname + " " + chName + " :" + ch->getTopicName() + "\r\n");

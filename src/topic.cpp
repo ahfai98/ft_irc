@@ -54,7 +54,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
 		sendResponse(fd, ":ircserv 442 " + nickname + " " + chName + " :You're not on that channel\r\n");
 		return;
 	}
-	// QUERY
+	//QUERY
 	if (tokens.size() == 2)
 	{
 		std::string currentTopic = ch->getTopicName();
@@ -74,7 +74,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
 		sendResponse(fd, ":ircserv 461 " + nickname + " TOPIC :Too many parameters\r\n");
 		return;
 	}
-	// Set or clear topic
+	//Set or clear topic
 	std::string newTopic;
 	if (tokens.size() > 2)
 	{
@@ -97,7 +97,6 @@ void Server::TOPIC(const std::string &cmd, int fd)
 		sendResponse(fd, ":ircserv 461 " + nickname + " TOPIC :Topic is too long\r\n");
 		return;
 	}
-	// Check operator privileges if topic is protected
 	if (ch->getTopicMode() && !ch->isChannelOperator(nickname))
 	{
 		sendResponse(fd, ":ircserv 482 " + nickname + " " + chName + " :You're not channel operator\r\n");
@@ -106,7 +105,7 @@ void Server::TOPIC(const std::string &cmd, int fd)
 	ch->setTopicName(newTopic);
 	ch->setTopicSetter(nickname);
 	ch->setTimeTopicCreated();
-	// Broadcast topic change
+	//Broadcast topic change
 	std::ostringstream oss;
 	oss << ":" << cli->getPrefix() << " TOPIC " << chName << " :";
 	if (!newTopic.empty())

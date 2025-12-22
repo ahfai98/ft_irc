@@ -17,17 +17,22 @@ void Server::KICK(const std::string &cmd, int fd)
 	std::string reason = "";
 	if (tokens.size() > 3)
 	{
-		for (size_t i = 3; i < tokens.size(); ++i)
+		if (!tokens[3].empty() && tokens[3][0] == ':')
 		{
-			if (i > 3)
-				reason += " ";
-			reason += tokens[i];
+			for (size_t i = 3; i < tokens.size(); ++i)
+			{
+				if (i > 3)
+					reason += " ";
+				reason += tokens[i];
+			}
+			if (!reason.empty())
+			{
+				reason = reason.substr(1);
+				reason = trim(reason);
+			}
 		}
-		if (!reason.empty() && reason[0] == ':')
-		{
-			reason = reason.substr(1);
-			reason = trim(reason);
-		}
+		else if (!tokens[3].empty())
+			reason = trim(tokens[3]);
 	}
 	std::vector<std::string> channels = splitString(channelsList, ',');
 	std::vector<std::string> users = splitString(usersList, ',');
@@ -85,14 +90,14 @@ void Server::KICK(const std::string &cmd, int fd)
 			sendResponse(fd, ":ircserv 482 " + nickname + " " + chName + " :You cannot kick yourself\r\n");
 			continue;
 		}
-		// Build KICK message
+		//Build KICK message
 		if (reason.empty())
 			reason = "Kicked by " + nickname;
 		std::ostringstream oss;
 		oss << ":" << cli->getPrefix() << " KICK " << chName << " " << targetNick << " :" << reason << "\r\n";
 		ch->broadcastMessage(*this, oss.str());
 		target->removeJoinedChannels(internalChannelName);
-		// Remove target from channel
+		//Remove target from channel
 		if (ch->isChannelMember(targetNick))
 			ch->removeMemberByFd(target->getSocketFd());
 		else

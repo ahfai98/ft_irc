@@ -23,7 +23,6 @@ static bool isValidUsername(const std::string &username)
 	return true;
 }
 
-
 static bool isValidRealname(const std::string &realname)
 {
 	if (realname.empty())

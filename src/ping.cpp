@@ -12,19 +12,18 @@ void Server::PING(const std::string &cmd, int fd)
 		return;
 	}
 	std::string token = tokens[1];
-	std::string payload;
-
+	std::string msg;
 	if (!tokens[1].empty() && tokens[1][0] == ':')
 	{
 		for (size_t i = 1; i < tokens.size(); ++i)
 		{
 			if (i > 1)
-				payload += " ";
-			payload += tokens[i];
+				msg += " ";
+			msg += tokens[i];
 		}
-		payload.erase(0, 1);
+		msg.erase(0, 1);
 	}
 	else
-		payload = tokens[1];
-	sendResponse(fd, ":ircserv PONG ircserv :" + payload + "\r\n");
+		msg = tokens[1];
+	sendResponse(fd, ":ircserv PONG ircserv :" + msg + "\r\n");
 }
