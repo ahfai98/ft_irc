@@ -228,7 +228,6 @@ bool Channel::setAsMember(const std::string& nickname)
 	return false;
 }
 
-//ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 //returns -1 if fail, otherwise returns how many bytes sent
 void Channel::sendMessageToClients(Server& server, const std::vector<Client*>& clients, const std::string& msg, int excludeFd)
 {

@@ -29,14 +29,14 @@ class Client
 		bool getPasswordAuthenticated() const;
 		bool getRegistered() const;
 		bool getQuitting() const;
-		std::string getUsername() const;
-		std::string getRealname() const;
-		std::string getNickname() const;
+		const std::string& getUsername() const;
+		const std::string& getRealname() const;
+		const std::string& getNickname() const;
 		std::string& getReceiveBuffer();
 		std::string& getSendBuffer() ;
 		const std::vector<std::string>& getJoinedChannels() const;
 		std::string getPrefix() const;
-		std::string getIpAddress() const;
+		const std::string& getIpAddress() const;
 		//Setters
 		void setSocketFd(int fd);
 		void setPasswordAuthenticated(bool value);

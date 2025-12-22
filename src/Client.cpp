@@ -26,15 +26,17 @@ bool Client::getRegistered() const {return isRegistered;}
 
 bool Client::getQuitting() const {return isQuitting;}
 
-std::string Client::getUsername() const {return username;}
+const std::string& Client::getUsername() const {return username;}
 
-std::string Client::getRealname() const {return realname;}
+const std::string& Client::getRealname() const {return realname;}
 
-std::string Client::getNickname() const{return nickname;}
+const std::string& Client::getNickname() const{return nickname;}
 
 std::string& Client::getReceiveBuffer() {return receiveBuffer;}
 
 std::string& Client::getSendBuffer() {return sendBuffer;}
+
+const std::string& Client::getIpAddress() const{return ipAddress;}
 
 const std::vector<std::string>& Client::getJoinedChannels() const {return joinedChannels;}
 
@@ -75,29 +77,30 @@ bool Client::isInChannel(const std::string& name) const
 
 void Client::addJoinedChannels(const std::string& name)
 {
-	for (int i = joinedChannels.size() - 1; i >= 0; --i)
-    {
-        if (joinedChannels[i] == name)
-			return;
-    }
-	joinedChannels.push_back(name);
+	if (!isInChannel(name))
+		joinedChannels.push_back(name);
 }
 
 void Client::removeJoinedChannels(const std::string& name)
 {
-    for (int i = joinedChannels.size() - 1; i >= 0; --i)
-    {
-        if (joinedChannels[i] == name)
+	std::vector<std::string>::iterator it;
+    for (it = joinedChannels.begin(); it != joinedChannels.end(); ++it)
+	{
+        if (*it == name)
 		{
-            joinedChannels.erase(joinedChannels.begin() + i);
-			break;
-		}
+            joinedChannels.erase(it);
+            return;
+        }
     }
 }
 
 std::string Client::getPrefix() const
 {
-    return getNickname() + "!" + getUsername() + "@" + ipAddress;
+    // Format: nick!user@host
+	std::string user;
+	if(username.empty())
+		user = "unknown";
+	else
+		user = username;
+    return nickname + "!" + user + "@" + ipAddress;
 }
-
-std::string Client::getIpAddress() const{return ipAddress;}
